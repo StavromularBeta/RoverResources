@@ -56,6 +56,5 @@ class Connector(object):
             cursor.execute(query)
         db_connection.commit()
         returned_query = cursor
-        # in Cannabase, I had to delete this line.
-        db_connection.close()
         return returned_query
+
