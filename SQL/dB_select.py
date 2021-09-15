@@ -50,3 +50,35 @@ class Select(Connector):
         else:
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id"
         self.print_or_return_query(query, (condition,), print_view)
+
+    def left_join_table_one_table_two(self,
+                                      table_one_name_and_field,
+                                      table_two_name_and_field,
+                                      table_one_join_id,
+                                      table_two_join_id,
+                                      order_by_field,
+                                      print_view=False):
+        query = "SELECT " + table_one_name_and_field + ", " + table_two_name_and_field + " FROM " +\
+                table_one_name_and_field.split(".")[0] + " LEFT JOIN " + table_two_name_and_field.split(".")[0] +\
+                " ON " + table_one_join_id + " = " + table_two_join_id + " ORDER BY " + order_by_field
+        self.print_or_return_query(query, False, print_view)
+
+    def left_join_three_tables(self,
+                               fields_to_select_string,
+                               leftmost_table,
+                               leftmost_id,
+                               middle_table,
+                               middle_id_with_left,
+                               middle_id_with_right,
+                               rightmost_table,
+                               right_id,
+                               order_by_field,
+                               print_view=True):
+        query = "SELECT " + fields_to_select_string + " FROM " +\
+                leftmost_table +\
+                " LEFT JOIN " + middle_table +\
+                " ON " + leftmost_id + " = " + middle_id_with_left +\
+                " LEFT JOIN " + rightmost_table +\
+                " ON " + middle_id_with_right + " = " + right_id +\
+                " ORDER BY " + order_by_field
+        self.print_or_return_query(query, False, print_view)
