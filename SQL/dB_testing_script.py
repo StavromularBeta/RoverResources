@@ -14,5 +14,8 @@ new_entry.new_categories_record("general equipment")
 new_entry.new_categories_record("chemicals")
 new_entry.new_categories_record("labware")
 new_entry.new_categories_record("other")
-new_selection.select_all_from_table_ascending("categories", True)
 """
+
+new_selection.select_all_from_table("categories", True)
+new_selection.select_all_from_table_where_one_field_like("categories", "category_name", "%stan%", True)
+new_selection.select_all_from_table_where_one_field_equals("categories", "category_name", "standards", True)
