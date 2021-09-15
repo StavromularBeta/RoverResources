@@ -1,5 +1,6 @@
 from SQL.dB_add_delete import AddDelete
 from SQL.dB_select import Select
+import datetime
 
 new_entry = AddDelete()
 new_selection = Select()
@@ -53,7 +54,8 @@ new_selection.left_join_table_one_table_two("vendors.vendor_name",
                                             "vendors.id",
                                             True)
 
-# lists the category, vendor, product code and product name for each item in the products table. 
+# can join one or two tables together (left join).
+ 
 
 new_selection.
     left_join_three_tables("categories.category_name, vendors.vendor_name, products.product_code, products.name",
@@ -67,5 +69,53 @@ new_selection.
                            "categories.category_name",
                            True)
 
+new_selection.
+    left_join_two_tables("categories.category_name, products.name",
+                         "products",
+                         "products.categories_id",
+                         "categories",
+                         "categories.id",
+                         "categories.category_name",
+                         True)
+                         
+# adding new credentials, and a new user
+
+new_entry.new_credentials_record("Full")
+new_entry.new_user_record((1, "Peter", "12345"))
+new_entry.new_requests_record((3, 1, datetime.date.today(), 4))
+new_selection.select_all_from_table("requests", True)
+
+# selecting the requests for a user
+
+new_selection.
+    left_join_three_tables("p.name, p.product_code, r.request_date, r.amount, u.user_name",
+                           "requests r",
+                           "r.products_id",
+                           "products p",
+                           "p.id",
+                           "r.users_id",
+                           "users u",
+                           "u.id",
+                           "u.user_name",
+                           True)
+
+# selecting the requests for a user with vendor information
+
+new_selection.
+    left_join_four_tables("p.name, p.product_code, v.vendor_name, r.request_date, r.amount, u.user_name",
+                          "requests r",
+                          "r.products_id",
+                          "products p",
+                          "p.id",
+                          "r.users_id",
+                          "users u",
+                          "u.id",
+                          "p.vendors_id",
+                          "vendors v",
+                          "v.id",
+                          "u.user_name",
+                          True)
+                          
 """
+
 
