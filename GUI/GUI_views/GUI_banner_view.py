@@ -1,5 +1,5 @@
 import tkinter as tk
-import GUI.GUI_formatting.Formatting as tk_formatting
+import GUI.GUI_formatting.GUI_formatting as tk_formatting
 
 
 class BannerView(tk.Frame):

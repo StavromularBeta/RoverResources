@@ -1,5 +1,5 @@
 import tkinter as tk
-from GUI.GUI_views.GUI_views_main import LoginView as lv
+from GUI.GUI_views.GUI_views_main import GUI_login_view as lv
 
 
 class MainWindow(tk.Frame):

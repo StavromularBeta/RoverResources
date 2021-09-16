@@ -1,5 +1,5 @@
 import tkinter as tk
-from GUI.GUI_formatting import Formatting as tk_formatting
+from GUI.GUI_formatting import GUI_formatting as tk_formatting
 
 
 class LoginView(tk.Frame):
