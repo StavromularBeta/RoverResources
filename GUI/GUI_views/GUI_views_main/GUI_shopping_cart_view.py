@@ -36,17 +36,24 @@ class ShoppingCartView(tk.Frame):
     def add_product_to_cart(self, product_to_add):
         add_product_amount_popup = tk.Toplevel()
         add_product_amount_popup.config(bg=self.formatting.colour_code_1)
-        add_product_amount_popup.geometry('300x300')
+        add_product_amount_popup.geometry('400x90')
         tk.Label(add_product_amount_popup,
-                 text="Amount to Request: ").grid(row=0, column=0)
+                 text="Amount to Request: ",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
         amount_of_product = tk.Entry(add_product_amount_popup)
-        amount_of_product.grid(row=0, column=1)
+        amount_of_product.config(bg=self.formatting.colour_code_2,
+                                 fg=self.formatting.colour_code_1,
+                                 font=self.formatting.medium_step_font)
+        amount_of_product.grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
         tk.Button(add_product_amount_popup,
                   text="Add Request",
+                  font=self.formatting.medium_step_font,
                   command=lambda x=amount_of_product: self.add_product_to_cart_query(product_to_add,
                                                                                      x.get(),
                                                                                      add_product_amount_popup)).grid(
-            row=1, column=0
+            row=1, column=0, sticky=tk.W, padx=10, pady=5
         )
 
     def add_product_to_cart_query(self, product_to_add, amount_of_product, top_level):
@@ -56,6 +63,12 @@ class ShoppingCartView(tk.Frame):
                                                 amount_of_product))
         self.parent.display_shopping_cart_view(self.active_user)
         top_level.destroy()
+
+    def remove_product_from_cart(self, request_to_remove):
+        self.add_delete_db.delete_entries_from_table_by_field_condition("requests",
+                                                                        "id",
+                                                                        request_to_remove)
+        self.parent.display_shopping_cart_view(self.active_user)
 
     # PRODUCTS LIST METHODS
 
@@ -81,7 +94,7 @@ class ShoppingCartView(tk.Frame):
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
-                                         width=900,
+                                         width=1200,
                                          height=300,
                                          scrollregion=(0, 0, 0, 500),
                                          bd=0,
@@ -177,7 +190,7 @@ class ShoppingCartView(tk.Frame):
     def get_active_user_shopping_cart_from_database(self):
         self.shopping_cart = self.select_db.\
             left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date,+"
-                                      " r.amount, u.user_name",
+                                      " r.amount, u.user_name, r.id",
                                       [["requests r", "", "r.products_id"],
                                        ["products p", "p.id", "r.users_id"],
                                        ["users u", "u.id", "p.vendors_id"],
@@ -260,12 +273,20 @@ class ShoppingCartView(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=6, sticky=tk.W, padx=10, pady=5)
+            tk.Button(self.shopping_cart_frame,
+                      text="Remove Request",
+                      font=self.formatting.medium_step_font,
+                      command=lambda item=item: self.remove_product_from_cart(item[7])).grid(row=row_counter,
+                                                                                             column=7,
+                                                                                             sticky=tk.W,
+                                                                                             padx=10,
+                                                                                             pady=5)
             row_counter += 1
             even_odd += 1
 
     def create_scrollable_shopping_cart(self):
         shopping_cart_canvas = tk.Canvas(self.shopping_cart_scrollable_container,
-                                         width=900,
+                                         width=1200,
                                          height=300,
                                          scrollregion=(0, 0, 0, 1000),
                                          bd=0,

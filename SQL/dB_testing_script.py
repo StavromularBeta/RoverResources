@@ -101,7 +101,7 @@ new_selection.
 
 # selecting the requests for a user with vendor information
 
-"""
+
 
 new_selection.\
     left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date, r.amount," +
@@ -115,9 +115,30 @@ new_selection.\
                               True)
 
 new_selection.select_all_from_table("users", True)
-                          
 
+"""
 
+new_entry.new_credentials_record("Full")
+new_entry.new_credentials_record("Basic")
 
+new_entry.new_user_record((2, "Peter", "12345"))
+new_entry.new_user_record((2, "Rachel", "12345"))
+new_entry.new_user_record((1, "Wendy", "12345"))
 
+new_entry.new_categories_record("standards")
+new_entry.new_categories_record("media")
+new_entry.new_categories_record("office supplies")
+new_entry.new_categories_record("general equipment")
+new_entry.new_categories_record("chemicals")
+new_entry.new_categories_record("labware")
+new_entry.new_categories_record("other")
 
+new_entry.new_vendors_record("Sigma-Aldrich")
+new_entry.new_vendors_record("Restek")
+new_entry.new_vendors_record("VWR")
+new_entry.new_vendors_record("Dell")
+
+new_entry.new_products_record((1, 2, "RSTK567", "CBDA Standard (example)"))
+new_entry.new_products_record((1, 1, "FGK-52", "Fluffygumkernol"))
+new_entry.new_products_record((2, 2, "PEP2345", "Peptone mix (example)"))
+new_entry.new_products_record((3, 4, "QRDGETXH", "Dell Workstation Computer"))
