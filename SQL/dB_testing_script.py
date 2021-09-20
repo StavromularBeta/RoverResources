@@ -104,21 +104,6 @@ new_selection.
 """
 
 new_selection.\
-    left_join_four_tables("p.name, p.product_code, v.vendor_name, r.request_date, r.amount, u.user_name",
-                          "requests r",
-                          "r.products_id",
-                          "products p",
-                          "p.id",
-                          "r.users_id",
-                          "users u",
-                          "u.id",
-                          "p.vendors_id",
-                          "vendors v",
-                          "v.id",
-                          "u.user_name",
-                          True)
-
-new_selection.\
     left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date, r.amount," +
                               "u.user_name",
                               [["requests r", "", "r.products_id"],
@@ -128,6 +113,8 @@ new_selection.\
                                ["categories c", "c.id", ""]],
                               "u.user_name",
                               True)
+
+new_selection.select_all_from_table("users", True)
                           
 
 
