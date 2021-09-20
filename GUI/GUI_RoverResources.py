@@ -1,7 +1,7 @@
 import tkinter as tk
-import GUI.GUI_views.BannerView as Bb
-import GUI.GUI_views.MainView as Mw
-import GUI.GUI_formatting.Formatting as tk_formatting
+import GUI.GUI_views.GUI_banner_view as Bb
+import GUI.GUI_views.GUI_main_view as Mw
+import GUI.GUI_formatting.GUI_formatting as tk_formatting
 
 
 class MainApplication(tk.Frame):

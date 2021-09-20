@@ -58,7 +58,7 @@ class Select(Connector):
             query = "SELECT * FROM " + table_name + " ORDER BY id DESC"
         else:
             query = "SELECT * FROM " + table_name + " ORDER BY id"
-        self.print_or_return_query(query, False, print_view)
+        return self.print_or_return_query(query, False, print_view)
 
     def select_all_from_table_where_one_field_like(self,
                                                    table_name,
@@ -92,7 +92,7 @@ class Select(Connector):
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id DESC"
         else:
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id"
-        self.print_or_return_query(query, (condition,), print_view)
+        return self.print_or_return_query(query, (condition,), print_view)
 
     def select_all_from_table_where_one_field_equals(self,
                                                      table_name,
@@ -126,7 +126,7 @@ class Select(Connector):
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id DESC"
         else:
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id"
-        self.print_or_return_query(query, (condition,), print_view)
+        return self.print_or_return_query(query, (condition,), print_view)
 
     # LEFT JOINS
 
@@ -165,4 +165,4 @@ class Select(Connector):
                 query += " LEFT JOIN " + item[0] + " ON " + table_list_of_lists[table_index-1][2] + " = " + item[1]
                 table_index += 1
         query += " ORDER BY " + order_by_field
-        self.print_or_return_query(query, False, print_view)
+        return self.print_or_return_query(query, False, print_view)
