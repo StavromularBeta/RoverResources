@@ -25,38 +25,40 @@ class LoginView(tk.Frame):
 
     def generate_login_widgets(self):
         login_frame = tk.Frame(self)
+        login_frame.config(bg=self.formatting.colour_code_1)
         tk.Label(login_frame,
                  text="Username: ",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=0, column=0)
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, padx=10, pady=5)
         self.user_name = tk.Entry(login_frame,
-                                  width=100)
+                                  width=25)
         self.user_name.config(bg=self.formatting.colour_code_2,
                               fg=self.formatting.colour_code_1,
                               font=self.formatting.medium_step_font)
-        self.user_name.grid(row=0, column=1, sticky='NSEW')
+        self.user_name.grid(row=0, column=1, sticky='NSEW', padx=10, pady=5)
         tk.Label(login_frame,
                  text="Password: ",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=1, column=0)
+                 fg=self.formatting.colour_code_2).grid(row=1, column=0, padx=10, pady=5)
         self.password = tk.Entry(login_frame,
-                                 width=100)
+                                 width=25)
         self.password.config(bg=self.formatting.colour_code_2,
                              fg=self.formatting.colour_code_1,
                              font=self.formatting.medium_step_font,
                              show="*")
-        self.password.grid(row=1, column=1, sticky='NSEW')
+        self.password.grid(row=1, column=1, sticky='NSEW', padx=10, pady=5)
         return login_frame
 
     def generate_login_button(self):
         login_button_frame = tk.Frame(self)
+        login_button_frame.config(bg=self.formatting.colour_code_1)
         login_button = tk.Button(login_button_frame,
                                  text="Login",
                                  font=self.formatting.medium_step_font,
                                  command=lambda: self.check_if_username_is_match())
-        login_button.grid(row=0, column=0)
+        login_button.grid(row=0, column=0, padx=10, pady=5)
         return login_button_frame
 
     def check_if_username_is_match(self):
@@ -70,7 +72,10 @@ class LoginView(tk.Frame):
             if item[3] == password_input:
                 password_match = True
                 self.user_logging_in = item
-                self.parent.display_shopping_cart_view(self.user_logging_in)
+                if item[1] == 1:
+                    self.parent.display_admin_shopping_cart_view(self.user_logging_in)
+                else:
+                    self.parent.display_shopping_cart_view(self.user_logging_in)
         if not password_match:
             self.user_success_label = tk.Label(self,
                                                text="Incorrect Username or Password.",
