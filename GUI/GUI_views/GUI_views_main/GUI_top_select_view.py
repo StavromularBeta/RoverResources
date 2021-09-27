@@ -62,4 +62,3 @@ class TopSelectView(tk.Frame):
     def destroy_popup_and_go_to_login(self, top_level_window):
         self.parent.display_login_view()
         top_level_window.destroy()
-
