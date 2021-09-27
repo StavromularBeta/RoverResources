@@ -95,7 +95,7 @@ class ShoppingCartView(tk.Frame):
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
                                          width=1200,
-                                         height=300,
+                                         height=275,
                                          scrollregion=(0, 0, 0, 500),
                                          bd=0,
                                          highlightthickness=0)
@@ -287,7 +287,7 @@ class ShoppingCartView(tk.Frame):
     def create_scrollable_shopping_cart(self):
         shopping_cart_canvas = tk.Canvas(self.shopping_cart_scrollable_container,
                                          width=1200,
-                                         height=300,
+                                         height=275,
                                          scrollregion=(0, 0, 0, 1000),
                                          bd=0,
                                          highlightthickness=0)

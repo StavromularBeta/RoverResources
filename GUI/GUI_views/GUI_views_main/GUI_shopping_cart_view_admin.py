@@ -182,7 +182,7 @@ class ShoppingCartViewAdmin(tk.Frame):
     def create_scrollable_shopping_cart(self):
         shopping_cart_canvas = tk.Canvas(self.shopping_cart_scrollable_container,
                                          width=1200,
-                                         height=900,
+                                         height=500,
                                          scrollregion=(0, 0, 0, 1000),
                                          bd=0,
                                          highlightthickness=0)
