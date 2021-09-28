@@ -1,4 +1,5 @@
 from tkinter import font as tk_font
+import tkinter as tk
 
 
 class TkFormattingMethods:
@@ -11,3 +12,19 @@ class TkFormattingMethods:
         self.homepage_window_select_button_font = tk_font.Font(size=18, weight="bold")
         self.medium_step_font = tk_font.Font(size=12, weight="bold")
 
+    def create_shopping_cart_labels(self,
+                                    frame,
+                                    text,
+                                    text_colour):
+        label_to_return = tk.Label(frame,
+                                   text=text,
+                                   font=self.medium_step_font,
+                                   bg=self.colour_code_1,
+                                   fg=text_colour)
+        return label_to_return
+
+    def grid_shopping_cart_labels(self,
+                                  label,
+                                  row,
+                                  column):
+        label.grid(row=row, column=column, sticky=tk.W, padx=10, pady=5)
