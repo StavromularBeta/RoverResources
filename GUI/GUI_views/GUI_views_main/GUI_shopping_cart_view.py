@@ -69,7 +69,7 @@ class ShoppingCartView(tk.Frame):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
                                          width=1200,
                                          height=275,
-                                         scrollregion=(0, 0, 0, 500),
+                                         scrollregion=(0, 0, 0, 1000),
                                          bd=0,
                                          highlightthickness=0)
         products_list_canvas.config(bg=self.formatting.colour_code_1)

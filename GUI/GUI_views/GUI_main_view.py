@@ -2,6 +2,7 @@ import tkinter as tk
 import time
 from GUI.GUI_views.GUI_views_main import GUI_top_select_view as ts
 from GUI.GUI_views.GUI_views_main import GUI_login_view as lv
+from GUI.GUI_views.GUI_views_main import GUI_product_list_view as pl
 from GUI.GUI_views.GUI_views_main import GUI_shopping_cart_view as sc
 from GUI.GUI_views.GUI_views_main import GUI_shopping_cart_view_admin as sc_admin
 
@@ -11,6 +12,7 @@ class MainWindow(tk.Frame):
         tk.Frame.__init__(self, parent, **kwargs)
         self.login_view = lv.LoginView(self)
         self.top_select_view = ts.TopSelectView(self)
+        self.product_list_view = pl.ProductListView(self)
         self.shopping_cart_view = sc.ShoppingCartView(self)
         self.shopping_cart_view_admin = sc_admin.ShoppingCartViewAdmin(self)
 
@@ -19,6 +21,7 @@ class MainWindow(tk.Frame):
             widget.destroy()
         self.login_view = lv.LoginView(self)
         self.top_select_view = ts.TopSelectView(self)
+        self.product_list_view = pl.ProductListView(self)
         self.shopping_cart_view = sc.ShoppingCartView(self)
         self.shopping_cart_view_admin = sc_admin.ShoppingCartViewAdmin(self)
 
@@ -29,6 +32,13 @@ class MainWindow(tk.Frame):
 
     def display_top_frame_select_button_view(self, user):
         self.top_select_view.create_top_view_buttons(user)
+
+    def display_products_list_view(self, user):
+        self.clear_main_window()
+        self.display_top_frame_select_button_view(user)
+        self.product_list_view.products_list_view(user)
+        self.top_select_view.grid(sticky=tk.W, padx=10)
+        self.product_list_view.grid(sticky=tk.W, padx=10)
 
     def display_shopping_cart_view(self, user):
         self.clear_main_window()
