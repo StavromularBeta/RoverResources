@@ -8,31 +8,44 @@ class AddDelete(Connector):
 
     # ADDING METHODS
 
-    def new_categories_record(self, value):
+    def new_categories_record(self, values):
         """Inserts new record into categories table. Categories table holds different categories of products the lab
         might purchase.
 
         Parameters
         ----------
 
-        value : basestring
-            category name.
+        values : tuple
+            (category name, comments)
         """
-        query = 'INSERT OR IGNORE INTO categories (category_name) VALUES (?)'
-        return self.db_connector(query, (value,))
+        query = 'INSERT OR IGNORE INTO categories (category_name, comments) VALUES (?,?)'
+        return self.db_connector(query, values)
 
-    def new_vendors_record(self, value):
+    def new_sub_categories_record(self, values):
+        """Inserts new record into sub categories table. Sub categories table allows further division of categories.
+        Mostly used for subdividing standards.
+
+        Parameters
+        ----------
+
+        values : tuple
+            (categories ID, category name, comments)
+        """
+        query = 'INSERT OR IGNORE INTO sub_categories (categories_id, sub_category_name, comments) VALUES (?,?,?)'
+        return self.db_connector(query, values)
+
+    def new_vendors_record(self, values):
         """Inserts new record into vendors table. Vendors table holds different vendors that might sell products to the
         lab.
 
         Parameters
         ----------
 
-        value : basestring
-            vendor name.
+        values : tuple
+            (vendor name, comments)
         """
-        query = 'INSERT OR IGNORE INTO vendors (vendor_name) VALUES (?)'
-        return self.db_connector(query, (value,))
+        query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments) VALUES (?, ?)'
+        return self.db_connector(query, values)
 
     def new_products_record(self, values):
         """Inserts new record into products table. Products table holds approved products that have been ordered
@@ -43,22 +56,25 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (category ID, vendors ID, product code, name)
+            (category ID, sub category ID, vendors ID, product code, name, comments)
         """
-        query = 'INSERT OR IGNORE INTO products (categories_id, vendors_id, product_code, name) VALUES (?,?,?,?)'
+        query = 'INSERT OR IGNORE' \
+                ' INTO products' \
+                ' (categories_id, sub_categories_id, vendors_id, product_code, name, comments)' \
+                ' VALUES (?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_credentials_record(self, value):
+    def new_credentials_record(self, values):
         """Inserts new record into credentials table. Credentials indicate what a particular user can do in the program.
 
         Parameters
         ----------
 
-        value : basestring
-            credentials level.
+        values : tuple
+            (credentials level, comments)
         """
-        query = 'INSERT OR IGNORE INTO credentials (credential_level) VALUES (?)'
-        return self.db_connector(query, (value,))
+        query = 'INSERT OR IGNORE INTO credentials (credential_level, comments) VALUES (?,?)'
+        return self.db_connector(query, values)
 
     def new_user_record(self, values):
         """Inserts new record into users table. Each user of the program has a name, password, and level of credentials
@@ -68,9 +84,9 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (credentials ID, user name, user password)
+            (credentials ID, user name, user password, comments)
         """
-        query = 'INSERT OR IGNORE INTO users (credentials_id, user_name, user_password) VALUES (?,?,?)'
+        query = 'INSERT OR IGNORE INTO users (credentials_id, user_name, user_password, comments) VALUES (?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_requests_record(self, values):
@@ -81,9 +97,12 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (products ID, users ID, request date, amount)
+            (products ID, users ID, request date, unit of issue, dollars per unit, amount, comments)
         """
-        query = 'INSERT OR IGNORE INTO requests (products_id, users_id, request_date, amount) VALUES (?,?,?,?)'
+        query = 'INSERT OR IGNORE' \
+                ' INTO requests' \
+                ' (products_id, users_id, request_date, unit_of_issue, dollar_per_unit, amount, comments)' \
+                ' VALUES (?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_orders_record(self, values):
@@ -94,9 +113,9 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (requests ID, order date)
+            (requests ID, order date, units ordered, comments)
         """
-        query = 'INSERT OR IGNORE INTO orders (requests_id, order_date) VALUES (?,?)'
+        query = 'INSERT OR IGNORE INTO orders (requests_id, order_date, units_ordered, comments) VALUES (?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_received_record(self, values):
@@ -107,9 +126,13 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (orders ID, received date, received amount)
+            (orders ID, received date, received amount, lot number,
+             expiry date, storage location, model, equipment SIN, comments)
         """
-        query = 'INSERT OR IGNORE INTO received (orders_id, received_date, received_amount) VALUES (?,?,?)'
+        query = 'INSERT OR IGNORE' \
+                ' INTO received' \
+                ' (orders_id, received_date, received_amount, lot_number, expiry_date, storage_location, ' \
+                'model, equipment_SIN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_active_inventory_record(self, values):

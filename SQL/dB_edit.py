@@ -10,4 +10,6 @@ class EditDb(Connector):
         query = "UPDATE products SET " + field + " = '" + str(update) + "' WHERE id = " + str(product_id)
         return self.db_connector(query)
 
-
+    def edit_one_record_one_field_one_table(self, table, field, update, product_id):
+        query = "UPDATE " + table + " SET " + field + " = '" + str(update) + "' WHERE id = " + str(product_id)
+        return self.db_connector(query)
