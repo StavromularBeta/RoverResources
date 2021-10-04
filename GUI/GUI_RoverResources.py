@@ -11,7 +11,7 @@ class MainApplication(tk.Frame):
         self.formatting = tk_formatting.TkFormattingMethods()
         parent.config(bg=self.formatting.colour_code_1)
         # Banner Window
-        self.BannerBar = Bb.BannerView(self, width=1300)
+        self.BannerBar = Bb.BannerView(self, width=1500)
         self.BannerBar.config(bg=self.formatting.colour_code_1)
         self.BannerBar.pack(side="top", fill="x", expand=True)
         self.BannerBar.pack_propagate(0)
@@ -25,6 +25,6 @@ class MainApplication(tk.Frame):
 
 
 root = tk.Tk()
-root.geometry("1300x800")
+root.geometry("1500x800")
 MainApplication(root, height=800, width=1300).grid()
 root.mainloop()

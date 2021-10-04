@@ -25,46 +25,69 @@ class CreateTb(Connector):
         self.table_dictionary = {
                                 "categories": """ CREATE TABLE IF NOT EXISTS categories (
                                                        id integer PRIMARY KEY,
-                                                       category_name text) """,
+                                                       category_name text,
+                                                       comments text) """,
+
+                                "sub_categories": """ CREATE TABLE IF NOT EXISTS sub_categories (
+                                                       id integer PRIMARY KEY,
+                                                       categories_id int,
+                                                       sub_category_name text,
+                                                       comments text) """,
 
                                 "vendors": """ CREATE TABLE IF NOT EXISTS vendors (
                                                    id integer PRIMARY KEY,
-                                                   vendor_name text) """,
+                                                   vendor_name text,
+                                                   comments text) """,
 
                                 "products": """ CREATE TABLE IF NOT EXISTS products (
                                                     id integer PRIMARY KEY,
                                                     categories_id int,
+                                                    sub_categories_id int,
                                                     vendors_id int,
                                                     product_code text,
-                                                    name text) """,
+                                                    name text,
+                                                    comments text) """,
 
                                 "credentials": """ CREATE TABLE IF NOT EXISTS credentials (
                                                        id integer PRIMARY KEY,
-                                                       credential_level text) """,
+                                                       credential_level text,
+                                                       comments text) """,
 
                                 "users": """ CREATE TABLE IF NOT EXISTS users (
                                                  id integer PRIMARY KEY,
                                                  credentials_id int,
                                                  user_name text,
-                                                 user_password text) """,
+                                                 user_password text,
+                                                 comments text) """,
 
                                 "requests": """ CREATE TABLE IF NOT EXISTS requests (
                                                     id integer PRIMARY KEY,
                                                     products_id int,
                                                     users_id int,
                                                     request_date date,
-                                                    amount int) """,
+                                                    unit_of_issue text,
+                                                    dollar_per_unit float,
+                                                    amount int,
+                                                    comments text) """,
 
                                 "orders": """ CREATE TABLE IF NOT EXISTS orders (
                                                   id integer PRIMARY KEY,
                                                   requests_id int,
-                                                  order_date date) """,
+                                                  order_date date,
+                                                  units_ordered int,
+                                                  comments text) """,
 
                                 "received": """ CREATE TABLE IF NOT EXISTS received (
                                                     id integer PRIMARY KEY,
                                                     orders_id int,
                                                     received_date date,
-                                                    received_amount int) """,
+                                                    received_amount int,
+                                                    lot_number text,
+                                                    expiry_date datetime,
+                                                    storage_location text,
+                                                    model text,
+                                                    equipment_SIN text,
+                                                    comments text) """,
 
                                 "active_inventory": """ CREATE TABLE IF NOT EXISTS active_inventory (
                                                             id integer PRIMARY KEY,

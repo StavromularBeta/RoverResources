@@ -78,7 +78,7 @@ class ShoppingCartViewAdmin(tk.Frame):
             self.shopping_cart_sort_value.set(sort_by)
             self.shopping_cart = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date," +
-                                          " r.amount, u.user_name",
+                                          " r.amount, u.user_name, r.unit_of_issue, r.dollar_per_unit",
                                           [["requests r", "", "r.products_id"],
                                            ["products p", "p.id", "r.users_id"],
                                            ["users u", "u.id", "p.vendors_id"],
@@ -88,7 +88,7 @@ class ShoppingCartViewAdmin(tk.Frame):
         else:
             self.shopping_cart = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date," +
-                                          " r.amount, u.user_name",
+                                          " r.amount, u.user_name, r.unit_of_issue, r.dollar_per_unit",
                                           [["requests r", "", "r.products_id"],
                                            ["products p", "p.id", "r.users_id"],
                                            ["users u", "u.id", "p.vendors_id"],
@@ -123,15 +123,25 @@ class ShoppingCartViewAdmin(tk.Frame):
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=5, sticky=tk.W, padx=10, pady=5)
         tk.Label(self.shopping_cart_frame,
-                 text="Amount Requested",
+                 text="Unit of Issue",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=6, sticky=tk.W, padx=10, pady=5)
         tk.Label(self.shopping_cart_frame,
-                 text="Staff Member",
+                 text="Dollar/Unit",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=7, sticky=tk.W, padx=10, pady=5)
+        tk.Label(self.shopping_cart_frame,
+                 text="Amount Requested",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=8, sticky=tk.W, padx=10, pady=5)
+        tk.Label(self.shopping_cart_frame,
+                 text="Staff Member",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=9, sticky=tk.W, padx=10, pady=5)
 
     def populate_scrollable_shopping_cart(self):
         row_counter = 1
@@ -167,23 +177,33 @@ class ShoppingCartViewAdmin(tk.Frame):
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=5, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.shopping_cart_frame,
-                     text=item[5],
+                     text=item[7],
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=6, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.shopping_cart_frame,
-                     text=item[6],
+                     text=item[8],
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=7, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.shopping_cart_frame,
+                     text=str(item[5]) + " (" + str(float(item[8])*float(item[5])) + ")",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=8, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.shopping_cart_frame,
+                     text=item[6],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=9, sticky=tk.W, padx=10, pady=5)
             row_counter += 1
             even_odd += 1
 
     def create_scrollable_shopping_cart(self):
         shopping_cart_canvas = tk.Canvas(self.shopping_cart_scrollable_container,
-                                         width=1200,
+                                         width=1450,
                                          height=500,
-                                         scrollregion=(0, 0, 0, 1000),
+                                         scrollregion=(0, 0, 0, 1500),
                                          bd=0,
                                          highlightthickness=0)
         shopping_cart_canvas.config(bg=self.formatting.colour_code_1)

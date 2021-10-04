@@ -26,18 +26,29 @@ class TopSelectView(tk.Frame):
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.are_you_sure_logout_popup())
         log_out_button.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        display_products_list = tk.Button(self,
+                                          text="Categories & Vendors",
+                                          font=self.formatting.medium_step_font,
+                                          command=lambda:
+                                          self.parent.display_categories_and_vendors_view(self.active_user))
+        display_products_list.grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        display_products_list = tk.Button(self,
+                                          text="Products List",
+                                          font=self.formatting.medium_step_font,
+                                          command=lambda: self.parent.display_products_list_view(self.active_user))
+        display_products_list.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
         display_personal_cart = tk.Button(self,
                                           text="Personal Shopping Cart",
                                           font=self.formatting.medium_step_font,
                                           command=lambda: self.parent.display_shopping_cart_view(self.active_user))
-        display_personal_cart.grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        display_personal_cart.grid(row=0, column=4, sticky=tk.W, padx=10, pady=5)
         if self.active_user[1] == 1:
             display_all_carts = tk.Button(self,
                                           text="All Shopping Carts",
                                           font=self.formatting.medium_step_font,
                                           command=lambda: self.parent.display_admin_shopping_cart_view(
                                               self.active_user))
-            display_all_carts.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+            display_all_carts.grid(row=0, column=5, sticky=tk.W, padx=10, pady=5)
 
     def are_you_sure_logout_popup(self):
         are_you_sure_logout_popup = tk.Toplevel()
