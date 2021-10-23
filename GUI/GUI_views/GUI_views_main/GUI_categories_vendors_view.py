@@ -29,6 +29,8 @@ class CategoriesVendorsView(tk.Frame):
         self.categories_list_frame.config(bg=self.formatting.colour_code_1)
         self.vendors_navigation_frame.config(bg=self.formatting.colour_code_2)
         self.categories_navigation_frame.config(bg=self.formatting.colour_code_2)
+        self.categories_canvas_length = 0
+        self.vendors_canvas_length = 0
 
     # MAIN METHODS
 
@@ -112,7 +114,7 @@ class CategoriesVendorsView(tk.Frame):
         products_list_canvas = tk.Canvas(self.vendors_list_scrollable_container,
                                          width=500,
                                          height=500,
-                                         scrollregion=(0, 0, 0, 1000),
+                                         scrollregion=(0, 0, 0, self.vendors_canvas_length),
                                          bd=0,
                                          highlightthickness=0)
         products_list_canvas.config(bg=self.formatting.colour_code_1)
@@ -162,6 +164,7 @@ class CategoriesVendorsView(tk.Frame):
                                                                                              sticky=tk.W,
                                                                                              padx=10,
                                                                                              pady=5)
+            self.vendors_canvas_length += 50
             row_counter += 1
             even_odd += 1
 
@@ -205,6 +208,7 @@ class CategoriesVendorsView(tk.Frame):
                                                                                              sticky=tk.W,
                                                                                              padx=10,
                                                                                              pady=5)
+            self.categories_canvas_length += 50
             row_counter += 1
             even_odd += 1
 
@@ -212,7 +216,7 @@ class CategoriesVendorsView(tk.Frame):
         shopping_cart_canvas = tk.Canvas(self.categories_list_scrollable_container,
                                          width=500,
                                          height=500,
-                                         scrollregion=(0, 0, 0, 1000),
+                                         scrollregion=(0, 0, 0, self.categories_canvas_length),
                                          bd=0,
                                          highlightthickness=0)
         shopping_cart_canvas.config(bg=self.formatting.colour_code_1)

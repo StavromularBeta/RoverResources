@@ -128,6 +128,67 @@ class Select(Connector):
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id"
         return self.print_or_return_query(query, (condition,), print_view)
 
+    def select_all_from_table_where_one_field_equals_order_by(self,
+                                                              table_name,
+                                                              field_name,
+                                                              condition,
+                                                              order_by,
+                                                              print_view=False,
+                                                              descending_order=False):
+        """selects all records from a table, where a particular field matches (using equals) a condition. Matches must
+        be exact.
+
+        Parameters
+        ----------
+
+        table_name : string
+            name of table to select all records from.
+
+        field_name : string
+            name of field to apply condition to.
+
+        condition : string
+            condition to apply to field (field = condition).
+
+        print_view : bool
+            True if you want to print query result to console. If selected, method returns nothing. Otherwise,
+            returns query.
+
+        descending_order : bool
+            if True, query is returned from db in descending order.
+        """
+        if descending_order:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by + " DESC"
+        else:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by
+        return self.print_or_return_query(query, (condition,), print_view)
+
+    def select_one_from_table_where_field_equals(self,
+                                                 table_name,
+                                                 field_name,
+                                                 condition,
+                                                 print_view=False,
+                                                 descending_order=False):
+        if descending_order:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id DESC LIMIT 1"
+        else:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id LIMIT 1"
+        return self.print_or_return_query(query, (condition,), print_view)
+
+    def select_one_from_table_where_field_equals_order_by(self,
+                                                          table_name,
+                                                          field_name,
+                                                          condition,
+                                                          order_by,
+                                                          print_view=False,
+                                                          descending_order=False):
+        if descending_order:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by +\
+                    " DESC LIMIT 1"
+        else:
+            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by + " LIMIT 1"
+        return self.print_or_return_query(query, (condition,), print_view)
+
     # LEFT JOINS
 
     def left_join_multiple_tables(self,

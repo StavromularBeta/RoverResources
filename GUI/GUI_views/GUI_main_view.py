@@ -43,17 +43,17 @@ class MainWindow(tk.Frame):
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.categories_vendors_view.grid(sticky=tk.W, padx=10)
 
-    def display_products_list_view(self, user):
+    def display_products_list_view(self, user, sort_by=False):
         self.clear_main_window()
         self.display_top_frame_select_button_view(user)
-        self.product_list_view.products_list_view(user)
+        self.product_list_view.products_list_view(user, sort_by)
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.product_list_view.grid(sticky=tk.W, padx=10)
 
-    def display_shopping_cart_view(self, user):
+    def display_shopping_cart_view(self, user, product_sort_by=False):
         self.clear_main_window()
         self.display_top_frame_select_button_view(user)
-        self.shopping_cart_view.shopping_cart_view(user)
+        self.shopping_cart_view.shopping_cart_view(user, product_sort_by)
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.shopping_cart_view.grid()
 

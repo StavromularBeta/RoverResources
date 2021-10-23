@@ -1,4 +1,5 @@
 import tkinter as tk
+import datetime
 from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
@@ -6,16 +7,64 @@ from GUI.GUI_formatting import GUI_formatting as tk_formatting
 
 
 class ProductListView(tk.Frame):
+    """user interface for the products contained in the RoverResourcesDatabase. Functionality of page dependent on
+    user credentials.
 
+    Attributes
+    ----------
+
+    parent : tk.Frame
+        the parent frame, which in this instance is GUI_main_view.py.
+
+    active_user : tuple
+        the active user tuple, in the form (credentials ID, username, password, comments)
+
+    formatting : object
+        formatting Tkinter methods from GUI_formatting.py
+
+    select_db : object
+        selection SQL methods from dB_select.py
+
+    add_delete_db : object
+        adding and deleting SQL methods from dB_add_delete.py
+
+    edit_db : object
+        editing SQL methods from dB_edit.py
+
+    products_list : tuple
+        the returned products list, the result of a left join of products, categories, vendors, and sub-categories.
+        Currently only accessing the priceTracking table when an individual product is opened.
+
+    products_list_navigation_frame : tk.Frame
+        the frame that holds the scrollable products list container and canvas.
+
+    products_list_scrollable_container : tk.Frame
+        the frame that holds the frame containing the labels that make up the scrollable products list.
+
+    products_list_frame : tk.Frame
+        the frame that holds the actual widgets making up the scrollable products list.
+
+    sub_categories_menu : string
+        placeholder for the sub categories menu, so it can be refreshed when a category is changed in the new product
+        pop-up.
+
+    sub_categories_value : basestring
+        placeholder for the sub categories value, so it can be refreshed when a category is changed in the new product
+        pop-up.
+
+    """
     def __init__(self, parent, **kwargs):
         tk.Frame.__init__(self, parent, **kwargs)
         self.parent = parent
-        self.active_user = ""
+        self.active_user = ()
+        # GUI Formatting
         self.formatting = tk_formatting.TkFormattingMethods()
+        # SQL methods
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
         self.edit_db = dB_edit.EditDb()
-        self.products_list = ""
+        # Product List View Variables
+        self.products_list = ()
         self.config(bg=self.formatting.colour_code_1)
         self.products_list_navigation_frame = tk.Frame(self)
         self.products_list_scrollable_container = tk.Frame(self)
@@ -24,23 +73,50 @@ class ProductListView(tk.Frame):
         self.products_list_navigation_frame.config(bg=self.formatting.colour_code_2)
         self.sub_categories_menu = ""
         self.sub_categories_value = ""
+        self.products_list_canvas_length = 0
+        self.product_list_view_by = ["Product Name",
+                                     "Product Code",
+                                     "Vendor Name",
+                                     "Product Category",
+                                     "Product Sub-Category"]
+        self.product_list_sort_value = tk.StringVar(self)
+        self.product_list_sort_value.set("Product Name")
+        self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
+                                                            "Vendor Name": "v.vendor_name",
+                                                            "Product Category": "c.category_name",
+                                                            "Product Sub-Category":
+                                                                "c.category_name, sc.sub_category_name",
+                                                            "Product Name": "p.name"}
 
-    # MAIN METHODS
+    # MAIN METHODS ####################################################################################################
 
-    def products_list_view(self, user):
+    def products_list_view(self, user, sort_by=False):
+        """ Sets the method active user variable to the one that was passed from GUI_main_view.py, then starts the main
+        method for the Product List View, create products list.
+
+        Parameters
+        ----------
+
+        user : tuple
+            tuple in the form (credential ID, user name, user password, comments).
+        """
         self.active_user = user
-        self.create_products_list()
+        self.create_products_list(sort_by)
 
-    def create_products_list(self):
+    def create_products_list(self, sort_by=False):
+        """First creates the products list navigation frame, which allows the user to interact with the view. Then gets
+        all the products from the database. Makes the headers for the scrollable products list, and then populates it
+        with the results from the products list query. Finally generates the canvas and scrollbar containing the info.
+        """
         self.create_products_list_navigation_frame()
-        self.get_products_list_from_database()
+        self.get_products_list_from_database(sort_by)
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
         self.create_scrollable_products_list()
         self.products_list_navigation_frame.grid(sticky=tk.W, pady=10)
         self.products_list_scrollable_container.grid()
 
-    # PRODUCTS LIST METHODS
+    # CREATE PRODUCTS LIST METHODS ####################################################################################
 
     def create_products_list_navigation_frame(self):
         tk.Label(self.products_list_navigation_frame,
@@ -66,22 +142,53 @@ class ProductListView(tk.Frame):
                                                             sticky=tk.W,
                                                             padx=10,
                                                             pady=5)
+        type_of_sort_menu = tk.OptionMenu(self.products_list_navigation_frame,
+                                          self.product_list_sort_value,
+                                          *self.product_list_view_by)
+        type_of_sort_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_sort_menu.config(font=self.formatting.medium_step_font)
+        tk.Label(self.products_list_navigation_frame,
+                 text="Sort Products",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, pady=5)
+        type_of_sort_menu.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+        sort_by_button = tk.Button(self.products_list_navigation_frame,
+                                   text="Sort Data",
+                                   font=self.formatting.medium_step_font,
+                                   command=lambda: self.parent.display_products_list_view(
+                                       self.active_user,
+                                       self.product_list_sort_value.get())).grid(
+            row=0, column=4, sticky=tk.W, padx=10, pady=5
+        )
 
-    def get_products_list_from_database(self):
-        self.products_list = self.select_db.left_join_multiple_tables(
-            "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
-            " p.categories_id, p.sub_categories_id",
-            [["products p", "", "p.categories_id"],
-             ["categories c", "c.id", "p.vendors_id"],
-             ["vendors v", "v.id", "p.sub_categories_id"],
-             ["sub_categories sc", "sc.id", '']],
-            "p.name")
+    def get_products_list_from_database(self, sort_by=None):
+        if sort_by:
+            sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[sort_by]
+            self.product_list_sort_value.set(sort_by)
+            self.products_list = self.select_db.left_join_multiple_tables(
+                "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
+                " p.categories_id, p.sub_categories_id, p.unit_of_issue",
+                [["products p", "", "p.categories_id"],
+                ["categories c", "c.id", "p.vendors_id"],
+                ["vendors v", "v.id", "p.sub_categories_id"],
+                ["sub_categories sc", "sc.id", '']],
+                sort_by_variable)
+        else:
+            self.products_list = self.select_db.left_join_multiple_tables(
+                "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
+                " p.categories_id, p.sub_categories_id, p.unit_of_issue",
+                [["products p", "", "p.categories_id"],
+                ["categories c", "c.id", "p.vendors_id"],
+                ["vendors v", "v.id", "p.sub_categories_id"],
+                ["sub_categories sc", "sc.id", '']],
+                "p.name")
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
                                          width=1200,
                                          height=550,
-                                         scrollregion=(0, 0, 0, 1000),
+                                         scrollregion=(0, 0, 0, self.products_list_canvas_length),
                                          bd=0,
                                          highlightthickness=0)
         products_list_canvas.config(bg=self.formatting.colour_code_1)
@@ -118,6 +225,10 @@ class ProductListView(tk.Frame):
                                                                               "Sub-Category",
                                                                               self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(product_category_header, 0, 5)
+        product_unit_issue_header = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                                "Units",
+                                                                                self.formatting.colour_code_2)
+        self.formatting.grid_shopping_cart_labels(product_unit_issue_header, 0, 6)
 
     def populate_scrollable_products_list(self):
         row_counter = 1
@@ -152,12 +263,16 @@ class ProductListView(tk.Frame):
                                                                                          item[5],
                                                                                          text_color)
             self.formatting.grid_shopping_cart_labels(product_sub_category_label, row_counter, 5)
+            product_unit_issue_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                                   item[9],
+                                                                                   text_color)
+            self.formatting.grid_shopping_cart_labels(product_unit_issue_label, row_counter, 6)
             if self.active_user[1] == 1:
                 tk.Button(self.products_list_frame,
                           text="Open",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.individual_product_popup(item)).grid(row=row_counter,
-                                                                                              column=6,
+                                                                                              column=7,
                                                                                               sticky=tk.W,
                                                                                               padx=10,
                                                                                               pady=5)
@@ -165,7 +280,7 @@ class ProductListView(tk.Frame):
                           text="Delete",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.delete_product_popup(item)).grid(row=row_counter,
-                                                                                          column=7,
+                                                                                          column=8,
                                                                                           sticky=tk.W,
                                                                                           padx=10,
                                                                                           pady=5)
@@ -174,14 +289,17 @@ class ProductListView(tk.Frame):
                           text="View Notes",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: print("view notes")).grid(row=row_counter,
-                                                                              column=6,
+                                                                              column=7,
                                                                               sticky=tk.W,
                                                                               padx=10,
                                                                               pady=5)
+            self.products_list_canvas_length += 50
             row_counter += 1
             even_odd += 1
 
-    # POPUPS
+    # POPUPS #########################################################################################################
+
+    # NEW PRODUCT TOP LEVEL POP-UP ###################################################################################
 
     def new_product_popup(self):
         new_product_popup = tk.Toplevel()
@@ -189,6 +307,7 @@ class ProductListView(tk.Frame):
         new_product_popup.geometry('600x400')
         product_name_entry = tk.Entry(new_product_popup)
         product_catalog_id_entry = tk.Entry(new_product_popup)
+        unit_of_issue_entry = tk.Entry(new_product_popup)
         notes_entry = tk.Entry(new_product_popup)
         vendors_dict = {}
         categories_dict = {}
@@ -270,11 +389,17 @@ class ProductListView(tk.Frame):
         self.sub_categories_value.set(sub_categories_list[0])
         self.sub_categories_menu.grid(row=4, column=1, sticky=tk.W, padx=10, pady=10)
         tk.Label(new_product_popup,
-                 text="Notes",
+                 text="Unit of Issue",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=5, column=0, sticky=tk.W, padx=10, pady=10)
-        notes_entry.grid(row=5, column=1, sticky=tk.W, padx=10, pady=10)
+        unit_of_issue_entry.grid(row=5, column=1, sticky=tk.W, padx=10, pady=10)
+        tk.Label(new_product_popup,
+                 text="Notes",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=6, column=0, sticky=tk.W, padx=10, pady=10)
+        notes_entry.grid(row=6, column=1, sticky=tk.W, padx=10, pady=10)
         tk.Button(new_product_popup,
                   text="Add New Product",
                   font=self.formatting.medium_step_font,
@@ -284,9 +409,12 @@ class ProductListView(tk.Frame):
                                                                                vendors_dict[vendors_value.get()],
                                                                                product_catalog_id_entry.get(),
                                                                                product_name_entry.get(),
+                                                                               unit_of_issue_entry.get(),
                                                                                notes_entry.get()),
                                                                               new_product_popup)).grid(
-            row=6, column=0, sticky=tk.W, padx=10, pady=10)
+            row=7, column=0, sticky=tk.W, padx=10, pady=10)
+
+    # NEW PRODUCT POPUP METHODS
 
     def refresh_sub_categories_on_new_product_window(self, current_category, popup):
         self.sub_categories_menu.destroy()
@@ -308,89 +436,229 @@ class ProductListView(tk.Frame):
         self.sub_categories_value.set(sub_categories_list[0])
         self.sub_categories_menu.grid(row=4, column=1, sticky=tk.W, padx=10, pady=10)
 
+    # INDIVIDUAL PRODUCT MAIN POPUP ##################################################################################
+
     def individual_product_popup(self, product):
         individual_product_popup = tk.Toplevel()
+        product_frame = tk.Frame(individual_product_popup)
+        pricing_frame = tk.Frame(individual_product_popup)
         individual_product_popup.config(bg=self.formatting.colour_code_1)
-        individual_product_popup.geometry('600x500')
-        product_info_label = tk.Label(individual_product_popup,
+        product_frame.config(bg=self.formatting.colour_code_1)
+        pricing_frame.config(bg=self.formatting.colour_code_3)
+        individual_product_popup.geometry('820x650')
+        product_pricing_list = self.select_db.select_all_from_table_where_one_field_equals_order_by(
+            "priceTracking",
+            "products_id",
+            product[0],
+            "cost_date",
+            descending_order=True
+        )
+        product_pricing_list = [item for item in product_pricing_list]
+        # PRODUCT FRAME WIDGETS
+        product_info_label = tk.Label(product_frame,
                                       text="Product Information",
                                       font=self.formatting.homepage_window_select_button_font,
                                       bg=self.formatting.colour_code_1,
                                       fg=self.formatting.colour_code_3)
         self.formatting.grid_shopping_cart_labels(product_info_label, 0, 0)
-        product_name = self.formatting.create_shopping_cart_labels(individual_product_popup,
+        product_name = self.formatting.create_shopping_cart_labels(product_frame,
                                                                    product[1],
                                                                    self.formatting.colour_code_3)
         self.formatting.grid_shopping_cart_labels(product_name, 1, 0)
-        catalog_id = self.formatting.create_shopping_cart_labels(individual_product_popup,
+        catalog_id = self.formatting.create_shopping_cart_labels(product_frame,
                                                                  "Catalog: " + product[2],
                                                                  self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(catalog_id, 2, 0)
-        vendor_name = self.formatting.create_shopping_cart_labels(individual_product_popup,
+        vendor_name = self.formatting.create_shopping_cart_labels(product_frame,
                                                                   "Vendor: " + product[3],
                                                                   self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(vendor_name, 3, 0)
-        category_name = self.formatting.create_shopping_cart_labels(individual_product_popup,
+        category_name = self.formatting.create_shopping_cart_labels(product_frame,
                                                                     "Category: " + product[4],
                                                                     self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(category_name, 4, 0)
         if product[5] == "None":
-            sub_category_name = self.formatting.create_shopping_cart_labels(individual_product_popup,
+            sub_category_name = self.formatting.create_shopping_cart_labels(product_frame,
                                                                             "No Sub Category",
                                                                             self.formatting.colour_code_2)
         else:
-            sub_category_name = self.formatting.create_shopping_cart_labels(individual_product_popup,
+            sub_category_name = self.formatting.create_shopping_cart_labels(product_frame,
                                                                             "Sub Category: " + product[5],
                                                                             self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(sub_category_name, 5, 0)
-        product_notes = tk.Text(individual_product_popup,
+        unit_of_issue = self.formatting.create_shopping_cart_labels(product_frame,
+                                                                    "Unit of Issue: " + product[9],
+                                                                    self.formatting.colour_code_2)
+        self.formatting.grid_shopping_cart_labels(unit_of_issue, 6, 0)
+        product_notes = tk.Text(product_frame,
                                 height=5,
                                 width=40)
         product_notes.config(bg=self.formatting.colour_code_2)
         product_notes.config(state=tk.NORMAL)
         product_notes.insert(tk.END, product[6])
         product_notes.config(state=tk.DISABLED, wrap="word")
-        product_notes.grid(row=6, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        product_notes.grid(row=7, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
+        tk.Button(product_frame,
                   text="Edit",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.edit_product_name_or_catalog_id_popup(product,
-                                                                             "name",
-                                                                             individual_product_popup)).grid(
+                  command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
+                                                                                  "name",
+                                                                                  individual_product_popup)).grid(
             row=1, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        tk.Button(product_frame,
                   text="Edit",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.edit_product_name_or_catalog_id_popup(product,
-                                                                             "product_code",
-                                                                             individual_product_popup)).grid(
+                  command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
+                                                                                  "product_code",
+                                                                                  individual_product_popup)).grid(
             row=2, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        tk.Button(product_frame,
                   text="Edit",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.edit_product_vendor_or_category_popup(product,
                                                                              "vendors",
                                                                              individual_product_popup)).grid(
             row=3, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        tk.Button(product_frame,
                   text="Edit",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.edit_product_vendor_or_category_popup(product,
                                                                              "categories",
                                                                              individual_product_popup)).grid(
             row=4, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        tk.Button(product_frame,
                   text="Edit",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.edit_sub_category_popup(product,
-                                                               individual_product_popup)).grid(
+                  command=lambda: self.edit_product_sub_category_popup(product,
+                                                                       individual_product_popup)).grid(
             row=5, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(individual_product_popup,
+        tk.Button(product_frame,
+                  text="Edit",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
+                                                                                  "unit_of_issue",
+                                                                                  individual_product_popup)).grid(
+            row=6, column=1, sticky=tk.W, padx=10, pady=10)
+        tk.Button(product_frame,
                   text="Edit Notes",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.edit_notes_popup(product,
                                                         individual_product_popup)).grid(
-            row=7, column=0, sticky=tk.W, padx=10, pady=10)
+            row=8, column=0, sticky=tk.W, padx=10, pady=10)
+        # PRICING FRAME WIDGETS
+        pricing_info_label = tk.Label(pricing_frame,
+                                      text="Product Pricing History",
+                                      font=self.formatting.homepage_window_select_button_font,
+                                      bg=self.formatting.colour_code_3,
+                                      fg=self.formatting.colour_code_1)
+        self.formatting.grid_shopping_cart_labels(pricing_info_label, 0, 0)
+        tk.Button(pricing_frame,
+                  text="Add New Price",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.add_new_price_popup(product, individual_product_popup)
+                  ).grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
+        try:
+            tk.Label(pricing_frame,
+                     text="Current Price: $" +
+                          "{:.2f}".format(product_pricing_list[0][2]) +
+                          " (Last Updated " + str(product_pricing_list[0][3]) + ")",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_3,
+                     fg=self.formatting.colour_code_1).grid(row=2, column=0, sticky=tk.W, padx=10, pady=5)
+        except IndexError:
+            tk.Label(pricing_frame,
+                     text="No Price Set Yet.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_3,
+                     fg=self.formatting.colour_code_1).grid(row=2, column=0, sticky=tk.W, padx=10, pady=5)
+
+        price_history_textbox = tk.Text(pricing_frame,
+                                        height=25,
+                                        width=50)
+        price_history_textbox.config(state=tk.NORMAL)
+        price_history_textbox.insert(tk.END, "Price     | Date \n")
+        price_history_textbox.insert(tk.END, "------------------------------\n")
+        for item in product_pricing_list[1:]:
+            price_history_textbox.insert(tk.END, ("{:.2f}".format(item[2]) + " "*(10-len(str(item[2]))) + "| " +
+                                                  str(item[3]) +
+                                                  "\n"))
+        price_history_textbox.config(state=tk.DISABLED, wrap="word")
+        price_history_textbox.grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
+        product_frame.grid(row=0, column=0, padx=10, pady=10)
+        pricing_frame.grid(row=0, column=1, sticky=tk.NW, padx=10, pady=10)
+
+    # INDIVIDUAL PRODUCT SUB-POPUPS
+
+    def add_new_price_popup(self, product, individual_product_popup):
+        add_new_price_popup = tk.Toplevel()
+        add_new_price_popup.config(bg=self.formatting.colour_code_1)
+        add_new_price_popup.geometry('300x200')
+        price_entry = tk.Entry(add_new_price_popup)
+        tk.Label(add_new_price_popup,
+                 text="New Price: ",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2
+                 ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+        price_entry.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        tk.Button(add_new_price_popup,
+                  text="Add New Price",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.add_new_price_query_and_reload_products_page((product[0],
+                                                                                     price_entry.get(),
+                                                                                     datetime.date.today()),
+                                                                                    individual_product_popup,
+                                                                                    add_new_price_popup)
+                  ).grid(row=1, column=0, columnspan=2, sticky=tk.W, padx=10)
+        tk.Button(add_new_price_popup,
+                  text="Add Historical Price",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.historical_price_popup(product[0],
+                                                              price_entry.get(),
+                                                              individual_product_popup,
+                                                              add_new_price_popup)
+                  ).grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+
+    def historical_price_popup(self, product, price, individual_product_popup, add_new_price_popup):
+        historical_price_popup = tk.Toplevel()
+        historical_price_popup.config(bg=self.formatting.colour_code_1)
+        historical_price_popup.geometry('300x200')
+        year_entry = tk.Entry(historical_price_popup)
+        month_entry = tk.Entry(historical_price_popup)
+        day_entry = tk.Entry(historical_price_popup)
+        tk.Label(historical_price_popup,
+                 text="Year: ",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2
+                 ).grid(row=0, column=0, sticky=tk.W, padx=10)
+        year_entry.grid(row=0, column=1, sticky=tk.W, padx=10)
+        tk.Label(historical_price_popup,
+                 text="Month: ",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2
+                 ).grid(row=1, column=0, sticky=tk.W, padx=10)
+        month_entry.grid(row=1, column=1, sticky=tk.W, padx=10)
+        tk.Label(historical_price_popup,
+                 text="Day: ",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2
+                 ).grid(row=2, column=0, sticky=tk.W, padx=10)
+        day_entry.grid(row=2, column=1, sticky=tk.W, padx=10)
+        tk.Button(historical_price_popup,
+                  text="Add Historical Price",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.add_new_price_query_and_reload_products_page(
+                      (product,
+                       price,
+                       datetime.date(int(year_entry.get()),
+                                     int(month_entry.get()),
+                                     int(day_entry.get()))),
+                      individual_product_popup,
+                      add_new_price_popup,
+                      historical_price_popup)).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
 
     def edit_notes_popup(self, product, individual_product_popup):
         edit_notes_popup = tk.Toplevel()
@@ -413,7 +681,7 @@ class ProductListView(tk.Frame):
                                                                                      individual_product_popup)).grid(
             row=1, column=0, sticky=tk.W, padx=10, pady=10)
 
-    def edit_product_name_or_catalog_id_popup(self, product_to_edit, field_to_edit, individual_product_popup):
+    def edit_product_name_unit_or_catalog_id_popup(self, product_to_edit, field_to_edit, individual_product_popup):
         edit_product_popup = tk.Toplevel()
         edit_product_popup.config(bg=self.formatting.colour_code_1)
         edit_product_popup.geometry('500x90')
@@ -425,6 +693,8 @@ class ProductListView(tk.Frame):
         new_value_entry = tk.Entry(edit_product_popup)
         if field_to_edit == "name":
             new_value_entry.insert(tk.END, product_to_edit[1])
+        elif field_to_edit == "unit_of_issue":
+            new_value_entry.insert(tk.END, product_to_edit[9])
         else:
             new_value_entry.insert(tk.END, product_to_edit[2])
         new_value_entry.grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
@@ -436,27 +706,6 @@ class ProductListView(tk.Frame):
                                                                                      field_to_edit,
                                                                                      edit_product_popup,
                                                                                      individual_product_popup)).grid(
-            row=0, column=2, sticky=tk.W, padx=10, pady=10)
-
-    def delete_product_popup(self, product_to_delete):
-        are_you_sure_logout_popup = tk.Toplevel()
-        are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
-        are_you_sure_logout_popup.geometry('500x90')
-        tk.Label(are_you_sure_logout_popup,
-                 text="Are you sure you want to delete this product?",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
-        yes_i_am = tk.Button(are_you_sure_logout_popup,
-                             text="Yes",
-                             font=self.formatting.medium_step_font,
-                             command=lambda: self.destroy_popup_delete_product_and_reload(
-                                 are_you_sure_logout_popup)).grid(
-            row=0, column=1, sticky=tk.W, padx=10, pady=10)
-        no_i_aint = tk.Button(are_you_sure_logout_popup,
-                              text="No",
-                              font=self.formatting.medium_step_font,
-                              command=lambda: are_you_sure_logout_popup.destroy()).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
     def edit_product_vendor_or_category_popup(self, product_to_edit, field_to_edit, individual_product_popup):
@@ -496,7 +745,7 @@ class ProductListView(tk.Frame):
                       individual_product_popup)).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
-    def edit_sub_category_popup(self, product, top_level_window):
+    def edit_product_sub_category_popup(self, product, top_level_window):
         sub_category_dict = {}
         sub_category_list = []
         product_category_sub_cats = self.select_db.select_all_from_table_where_one_field_equals("sub_categories",
@@ -531,7 +780,31 @@ class ProductListView(tk.Frame):
                       edit_sub_category_popup,
                       top_level_window)).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
-    # POPUP CLOSE METHODS
+
+    # PRODUCT DELETION MAIN POPUP ####################################################################################
+
+    def delete_product_popup(self, product_to_delete):
+        are_you_sure_logout_popup = tk.Toplevel()
+        are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
+        are_you_sure_logout_popup.geometry('500x90')
+        tk.Label(are_you_sure_logout_popup,
+                 text="Are you sure you want to delete this product?",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+        yes_i_am = tk.Button(are_you_sure_logout_popup,
+                             text="Yes",
+                             font=self.formatting.medium_step_font,
+                             command=lambda: self.destroy_popup_delete_product_and_reload(
+                                 are_you_sure_logout_popup)).grid(
+            row=0, column=1, sticky=tk.W, padx=10, pady=10)
+        no_i_aint = tk.Button(are_you_sure_logout_popup,
+                              text="No",
+                              font=self.formatting.medium_step_font,
+                              command=lambda: are_you_sure_logout_popup.destroy()).grid(
+            row=0, column=2, sticky=tk.W, padx=10, pady=10)
+
+    # POPUP CLOSE METHODS ############################################################################################
 
     def add_new_product_close_popup_and_reload(self,
                                                values,
@@ -553,6 +826,18 @@ class ProductListView(tk.Frame):
         self.edit_db.edit_one_product_field(field_to_edit, new_value_entry, product_to_edit[0])
         top_level_window.destroy()
         product_window.destroy()
+        self.parent.display_products_list_view(self.active_user)
+
+    def add_new_price_query_and_reload_products_page(self,
+                                                     values,
+                                                     individual_product_popup,
+                                                     new_price_popup,
+                                                     historical_price_popup=None):
+        self.add_delete_db.new_price_tracking_record(values)
+        individual_product_popup.destroy()
+        new_price_popup.destroy()
+        if historical_price_popup:
+            historical_price_popup.destroy()
         self.parent.display_products_list_view(self.active_user)
 
     def destroy_popup_delete_product_and_reload(self, top_level_window):
