@@ -26,18 +26,21 @@ class CreateTb(Connector):
                                 "categories": """ CREATE TABLE IF NOT EXISTS categories (
                                                        id integer PRIMARY KEY,
                                                        category_name text,
-                                                       comments text) """,
+                                                       comments text,
+                                                       archived bool DEFAULT False) """,
 
                                 "sub_categories": """ CREATE TABLE IF NOT EXISTS sub_categories (
                                                        id integer PRIMARY KEY,
                                                        categories_id int,
                                                        sub_category_name text,
-                                                       comments text) """,
+                                                       comments text,
+                                                       archived bool DEFAULT False) """,
 
                                 "vendors": """ CREATE TABLE IF NOT EXISTS vendors (
                                                    id integer PRIMARY KEY,
                                                    vendor_name text,
-                                                   comments text) """,
+                                                   comments text,
+                                                   archived bool DEFAULT False) """,
 
                                 "products": """ CREATE TABLE IF NOT EXISTS products (
                                                     id integer PRIMARY KEY,
@@ -46,36 +49,48 @@ class CreateTb(Connector):
                                                     vendors_id int,
                                                     product_code text,
                                                     name text,
-                                                    comments text) """,
+                                                    unit_of_issue text,
+                                                    comments text,
+                                                    archived bool DEFAULT False) """,
+
+                                "priceTracking": """ CREATE TABLE IF NOT EXISTS priceTracking (
+                                                         id integer PRIMARY KEY,
+                                                         products_id int,
+                                                         cost decimal,
+                                                         cost_date datetime,
+                                                         archived bool DEFAULT False) """,
 
                                 "credentials": """ CREATE TABLE IF NOT EXISTS credentials (
                                                        id integer PRIMARY KEY,
                                                        credential_level text,
-                                                       comments text) """,
+                                                       comments text,
+                                                       archived bool DEFAULT False) """,
 
                                 "users": """ CREATE TABLE IF NOT EXISTS users (
                                                  id integer PRIMARY KEY,
                                                  credentials_id int,
                                                  user_name text,
                                                  user_password text,
-                                                 comments text) """,
+                                                 comments text,
+                                                 archived bool DEFAULT False) """,
 
                                 "requests": """ CREATE TABLE IF NOT EXISTS requests (
                                                     id integer PRIMARY KEY,
                                                     products_id int,
                                                     users_id int,
+                                                    price_id int,
                                                     request_date date,
-                                                    unit_of_issue text,
-                                                    dollar_per_unit float,
                                                     amount int,
-                                                    comments text) """,
+                                                    comments text,
+                                                    archived bool DEFAULT False) """,
 
                                 "orders": """ CREATE TABLE IF NOT EXISTS orders (
                                                   id integer PRIMARY KEY,
                                                   requests_id int,
                                                   order_date date,
                                                   units_ordered int,
-                                                  comments text) """,
+                                                  comments text,
+                                                  archived bool DEFAULT False) """,
 
                                 "received": """ CREATE TABLE IF NOT EXISTS received (
                                                     id integer PRIMARY KEY,
@@ -86,19 +101,16 @@ class CreateTb(Connector):
                                                     expiry_date datetime,
                                                     storage_location text,
                                                     model text,
-                                                    equipment_SIN text,
-                                                    comments text) """,
+                                                    equipment_SN text,
+                                                    comments text,
+                                                    archived bool DEFAULT False) """,
 
-                                "active_inventory": """ CREATE TABLE IF NOT EXISTS active_inventory (
+                                "inventory": """ CREATE TABLE IF NOT EXISTS active_inventory (
                                                             id integer PRIMARY KEY,
                                                             received_id,
                                                             location text,
-                                                            amount float) """,
-
-                                "archived_inventory": """ CREATE TABLE IF NOT EXISTS archived_inventory (
-                                                              id integer PRIMARY KEY,
-                                                              received_id,
-                                                              archived_date) """
+                                                            amount float,
+                                                            archived bool DEFAULT False) """
                                  }
         self.db_views = DbViews()
 
@@ -114,6 +126,7 @@ class CreateTb(Connector):
         """
         for key, value in self.table_dictionary.items():
             self.db_connector(value)
+
         if view_tables:
             self.db_views.view_database_architecture()
 

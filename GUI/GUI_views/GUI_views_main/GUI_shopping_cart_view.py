@@ -18,60 +18,115 @@ class ShoppingCartView(tk.Frame):
         self.shopping_cart = ""
         self.config(bg=self.formatting.colour_code_1)
         self.products_list_scrollable_container = tk.Frame(self)
+        self.products_list_scrollable_container.config(bg=self.formatting.colour_code_1, bd=0)
         self.shopping_cart_scrollable_container = tk.Frame(self)
+        self.shopping_cart_scrollable_container.config(bg=self.formatting.colour_code_1, bd=0)
         self.products_list_frame = tk.Frame(self)
         self.products_list_frame.config(bg=self.formatting.colour_code_1)
+        self.products_list_navigation_frame = tk.Frame(self)
+        self.products_list_navigation_frame.config(bg=self.formatting.colour_code_2)
         self.shopping_cart_frame = tk.Frame(self)
         self.shopping_cart_frame.config(bg=self.formatting.colour_code_1)
+        self.shopping_cart_navigation_frame = tk.Frame(self)
+        self.shopping_cart_navigation_frame.config(bg=self.formatting.colour_code_2)
+        self.shopping_cart_canvas_length = 0
+        self.shopping_cart_total_cost = 0.0
+        self.product_list_canvas_length = 0
+        self.product_list_view_by = ["Product Name",
+                                     "Product Code",
+                                     "Vendor Name",
+                                     "Product Category",
+                                     "Product Sub-Category"]
+        self.product_list_sort_value = tk.StringVar(self)
+        self.product_list_sort_value.set("Product Name")
+        self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
+                                                            "Vendor Name": "v.vendor_name",
+                                                            "Product Category": "c.category_name",
+                                                            "Product Sub-Category":
+                                                                "c.category_name, sc.sub_category_name",
+                                                            "Product Name": "p.name"}
 
     # MAIN METHODS
 
-    def shopping_cart_view(self, user):
+    def shopping_cart_view(self, user, product_sort_by=False):
         self.active_user = user
-        self.create_products_list()
+        self.create_products_list(product_sort_by)
         self.create_shopping_cart()
 
-    def create_products_list(self):
-        tk.Label(self,
-                 text="Products List",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=0, sticky=tk.W, padx=10, pady=5)
-        self.get_products_list_from_database()
+    def create_products_list(self, product_sort_by=False):
+        self.create_products_list_navigation_frame()
+        self.get_products_list_from_database(product_sort_by)
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
         self.create_scrollable_products_list()
+        self.products_list_navigation_frame.grid(sticky=tk.W, padx=10, pady=5)
         self.products_list_scrollable_container.grid(sticky=tk.W, padx=10, pady=5)
 
     def create_shopping_cart(self):
-        tk.Label(self,
-                 text="Shopping Cart for " + self.active_user[2],
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(sticky=tk.W, padx=10, pady=5)
         self.get_active_user_shopping_cart_from_database()
         self.make_scrollable_shopping_cart_header_labels()
         self.populate_scrollable_shopping_cart()
         self.create_scrollable_shopping_cart()
+        self.create_shopping_cart_navigation_frame()
+        self.shopping_cart_navigation_frame.grid(sticky=tk.W, padx=10, pady=5)
         self.shopping_cart_scrollable_container.grid(sticky=tk.W, padx=10, pady=5)
 
     # PRODUCTS LIST METHODS
 
-    def get_products_list_from_database(self):
-        self.products_list = self.select_db.left_join_multiple_tables(
-            "p.name, p.product_code, v.vendor_name, c.category_name, p.id ",
-            [["products p", "", "p.categories_id"],
-             ["categories c", "c.id", "p.vendors_id"],
-             ["vendors v", "v.id", ""]],
-            "p.name")
+    def create_products_list_navigation_frame(self):
+        tk.Label(self.products_list_navigation_frame,
+                 text="Products List",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=0, sticky=tk.W, pady=5)
+        type_of_sort_menu = tk.OptionMenu(self.products_list_navigation_frame,
+                                          self.product_list_sort_value,
+                                          *self.product_list_view_by)
+        type_of_sort_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_sort_menu.config(font=self.formatting.medium_step_font)
+        tk.Label(self.products_list_navigation_frame,
+                 text="Sort Products",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        type_of_sort_menu.grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        sort_by_button = tk.Button(self.products_list_navigation_frame,
+                                   text="Sort Products",
+                                   font=self.formatting.medium_step_font,
+                                   command=lambda: self.parent.display_shopping_cart_view(
+                                       self.active_user,
+                                       self.product_list_sort_value.get())).grid(
+            row=0, column=4, sticky=tk.W, padx=10, pady=5
+        )
+
+    def get_products_list_from_database(self, product_sort_by=None):
+        if product_sort_by:
+            sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[product_sort_by]
+            self.product_list_sort_value.set(product_sort_by)
+            self.products_list = self.select_db.left_join_multiple_tables(
+                "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
+                [["products p", "", "p.categories_id"],
+                 ["categories c", "c.id", "p.vendors_id"],
+                 ["vendors v", "v.id", "p.sub_categories_id"],
+                 ["sub_categories sc", "sc.id", ""]],
+                sort_by_variable)
+        else:
+            self.products_list = self.select_db.left_join_multiple_tables(
+                "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
+                 [["products p", "", "p.categories_id"],
+                 ["categories c", "c.id", "p.vendors_id"],
+                 ["vendors v", "v.id", "p.sub_categories_id"],
+                 ["sub_categories sc", "sc.id", ""]],
+                "p.name")
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
                                          width=1200,
                                          height=275,
-                                         scrollregion=(0, 0, 0, 1000),
+                                         scrollregion=(0, 0, 0, self.product_list_canvas_length),
                                          bd=0,
-                                         highlightthickness=0)
+                                         highlightthickness=0,
+                                         confine=True)
         products_list_canvas.config(bg=self.formatting.colour_code_1)
         products_list_canvas_scrollbar = tk.Scrollbar(self.products_list_scrollable_container,
                                                       orient="vertical",
@@ -102,6 +157,14 @@ class ShoppingCartView(tk.Frame):
                                                                               "Category",
                                                                               self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(product_category_header, 0, 4)
+        product_category_header = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                              "Sub Category",
+                                                                              self.formatting.colour_code_2)
+        self.formatting.grid_shopping_cart_labels(product_category_header, 0, 5)
+        product_category_header = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                              "Units",
+                                                                              self.formatting.colour_code_2)
+        self.formatting.grid_shopping_cart_labels(product_category_header, 0, 6)
 
     def populate_scrollable_products_list(self):
         row_counter = 1
@@ -127,28 +190,55 @@ class ShoppingCartView(tk.Frame):
                                                                                  item[3],
                                                                                  text_color)
             self.formatting.grid_shopping_cart_labels(product_category_label, row_counter, 4)
+            if item[5] == "None":
+                product_sub_category_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                                         "",
+                                                                                         text_color)
+            else:
+                product_sub_category_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                                         item[5],
+                                                                                         text_color)
+            self.formatting.grid_shopping_cart_labels(product_sub_category_label, row_counter, 5)
+            product_units_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
+                                                                              item[6],
+                                                                              text_color)
+            self.formatting.grid_shopping_cart_labels(product_units_label, row_counter, 6)
             tk.Button(self.products_list_frame,
                       text="Add to Cart",
                       font=self.formatting.medium_step_font,
                       command=lambda item=item: self.add_product_to_cart(item)).grid(row=row_counter,
-                                                                                     column=5,
+                                                                                     column=7,
                                                                                      sticky=tk.W,
                                                                                      padx=10,
                                                                                      pady=5)
             row_counter += 1
             even_odd += 1
+            self.product_list_canvas_length += 50
 
 # SHOPPING CART METHODS
+
+    def create_shopping_cart_navigation_frame(self):
+        tk.Label(self.shopping_cart_navigation_frame,
+                 text=self.active_user[2] + "'s Shopping Cart",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=0, sticky=tk.W, pady=5)
+        tk.Label(self.shopping_cart_navigation_frame,
+                 text="Total Cost: $" + "{:.2f}".format(self.shopping_cart_total_cost),
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.W, padx=20, pady=5)
 
     def get_active_user_shopping_cart_from_database(self):
         self.shopping_cart = self.select_db.\
             left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date,+"
-                                      " r.amount, u.user_name, r.id, r.unit_of_issue, r.dollar_per_unit",
+                                      " r.amount, u.user_name, r.id, p.unit_of_issue, pt.cost",
                                       [["requests r", "", "r.products_id"],
                                        ["products p", "p.id", "r.users_id"],
                                        ["users u", "u.id", "p.vendors_id"],
                                        ["vendors v", "v.id", "p.categories_id"],
-                                       ["categories c", "c.id", ""]],
+                                       ["categories c", "c.id", "r.price_id"],
+                                       ["priceTracking pt", "pt.id", ""]],
                                       "u.user_name")
         active_user_shopping_cart = []
         for item in self.shopping_cart:
@@ -242,7 +332,7 @@ class ShoppingCartView(tk.Frame):
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=7, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.shopping_cart_frame,
-                     text=str(item[5]) + " (" + str(float(item[9])*float(item[5])) + ")",
+                     text=str(item[5]) + " (" + "{:.2f}".format(float(item[9])*float(item[5])) + ")",
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=8, sticky=tk.W, padx=10, pady=5)
@@ -256,14 +346,17 @@ class ShoppingCartView(tk.Frame):
                                                                                              pady=5)
             row_counter += 1
             even_odd += 1
+            self.shopping_cart_total_cost += float(item[9])*float(item[5])
+            self.shopping_cart_canvas_length += 50
 
     def create_scrollable_shopping_cart(self):
         shopping_cart_canvas = tk.Canvas(self.shopping_cart_scrollable_container,
                                          width=1450,
                                          height=275,
-                                         scrollregion=(0, 0, 0, 1000),
-                                         bd=0,
-                                         highlightthickness=0)
+                                         scrollregion=(0, 0, 0, self.shopping_cart_canvas_length),
+                                         bd=1,
+                                         highlightthickness=0,
+                                         confine=True)
         shopping_cart_canvas.config(bg=self.formatting.colour_code_1)
         shopping_cart_canvas_scrollbar = tk.Scrollbar(self.shopping_cart_scrollable_container,
                                                       orient="vertical",
@@ -293,45 +386,28 @@ class ShoppingCartView(tk.Frame):
                                  fg=self.formatting.colour_code_1,
                                  font=self.formatting.medium_step_font)
         amount_of_product.grid(row=0, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Label(add_product_amount_popup,
-                 text="Unit of Issue: ",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=1, column=0, sticky=tk.W, padx=10, pady=10)
-        unit_of_issue = tk.Entry(add_product_amount_popup)
-        unit_of_issue.config(bg=self.formatting.colour_code_2,
-                             fg=self.formatting.colour_code_1,
-                             font=self.formatting.medium_step_font)
-        unit_of_issue.grid(row=1, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Label(add_product_amount_popup,
-                 text="Cost per Unit: ",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=2, column=0, sticky=tk.W, padx=10, pady=10)
-        cost_per_unit = tk.Entry(add_product_amount_popup)
-        cost_per_unit.config(bg=self.formatting.colour_code_2,
-                             fg=self.formatting.colour_code_1,
-                             font=self.formatting.medium_step_font)
-        cost_per_unit.grid(row=2, column=1, sticky=tk.W, padx=10, pady=10)
         tk.Button(add_product_amount_popup,
                   text="Add Request",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.add_product_to_cart_query(product_to_add,
                                                                  amount_of_product.get(),
-                                                                 unit_of_issue.get(),
-                                                                 cost_per_unit.get(),
                                                                  add_product_amount_popup)).grid(
-            row=3, column=0, sticky=tk.W, padx=10, pady=5
+            row=1, column=0, sticky=tk.W, padx=10, pady=5
         )
 
-    def add_product_to_cart_query(self, product_to_add, amount_of_product, unit_of_issue, cost_per_unit, top_level):
+    def add_product_to_cart_query(self, product_to_add, amount_of_product, top_level):
+        current_product_price = self.select_db.select_one_from_table_where_field_equals_order_by("priceTracking",
+                                                                                                 "products_id",
+                                                                                                 product_to_add[4],
+                                                                                                 "cost_date",
+                                                                                                 descending_order=True)
+        current_product_price = [item for item in current_product_price][0][0]
         self.add_delete_db.new_requests_record((product_to_add[4],
                                                 self.active_user[0],
+                                                current_product_price,
                                                 datetime.date.today(),
-                                                unit_of_issue,
-                                                cost_per_unit,
                                                 amount_of_product,
-                                                ""))
+                                               ""))
         self.parent.display_shopping_cart_view(self.active_user)
         top_level.destroy()
 

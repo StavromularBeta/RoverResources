@@ -56,12 +56,27 @@ class AddDelete(Connector):
         ----------
 
         values : tuple
-            (category ID, sub category ID, vendors ID, product code, name, comments)
+            (category ID, sub category ID, vendors ID, product code, name, unit of issue, comments)
         """
         query = 'INSERT OR IGNORE' \
                 ' INTO products' \
-                ' (categories_id, sub_categories_id, vendors_id, product_code, name, comments)' \
-                ' VALUES (?,?,?,?,?,?)'
+                ' (categories_id, sub_categories_id, vendors_id, product_code, name, unit_of_issue, comments)' \
+                ' VALUES (?,?,?,?,?,?,?)'
+        return self.db_connector(query, values)
+
+    def new_price_tracking_record(self, values):
+        """Inserts new record into priceTracking table. Holds prices for products, as pricing changes over time.
+
+        Parameters
+        ----------
+
+        values : tuple
+            (products_id, cost, cost_date)
+        """
+        query = 'INSERT OR IGNORE ' \
+                'INTO priceTracking ' \
+                '(products_id, cost, cost_date) ' \
+                'VALUES (?,?,?)'
         return self.db_connector(query, values)
 
     def new_credentials_record(self, values):
@@ -101,8 +116,8 @@ class AddDelete(Connector):
         """
         query = 'INSERT OR IGNORE' \
                 ' INTO requests' \
-                ' (products_id, users_id, request_date, unit_of_issue, dollar_per_unit, amount, comments)' \
-                ' VALUES (?,?,?,?,?,?,?)'
+                ' (products_id, users_id, price_id, request_date, amount, comments)' \
+                ' VALUES (?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_orders_record(self, values):
