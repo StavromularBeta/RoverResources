@@ -69,7 +69,7 @@ class CategoriesVendorsView(tk.Frame):
 
     def create_categories_navigation_frame(self):
         tk.Label(self.categories_navigation_frame,
-                 text="Products List",
+                 text="Categories",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -108,7 +108,7 @@ class CategoriesVendorsView(tk.Frame):
     # PRODUCTS LIST METHODS
 
     def get_vendors_list_from_database(self):
-        self.vendors_list = self.select_db.select_all_from_table("vendors")
+        self.vendors_list = self.select_db.select_all_from_table("vendors", no_archived=True)
 
     def create_scrollable_vendors_list(self):
         products_list_canvas = tk.Canvas(self.vendors_list_scrollable_container,
@@ -154,6 +154,14 @@ class CategoriesVendorsView(tk.Frame):
                                   sticky=tk.W,
                                   padx=10,
                                   pady=5)
+                tk.Button(self.vendors_list_frame,
+                          text="Archive",
+                          font=self.formatting.medium_step_font,
+                          command=lambda item=item: self.archive_vendor_popup(item)).grid(row=row_counter,
+                                                                                          column=8,
+                                                                                          sticky=tk.W,
+                                                                                          padx=10,
+                                                                                          pady=5)
             else:
                 tk.Button(self.vendors_list_frame,
                           text="View Notes",
@@ -171,7 +179,7 @@ class CategoriesVendorsView(tk.Frame):
 # SHOPPING CART METHODS
 
     def get_categories_list_from_database(self):
-        self.categories_list = self.select_db.select_all_from_table("categories")
+        self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True)
 
     def populate_scrollable_categories_list(self):
         row_counter = 0
@@ -451,3 +459,30 @@ class CategoriesVendorsView(tk.Frame):
         top_level_window.destroy()
         category_vendor_window.destroy()
         self.parent.display_categories_and_vendors_view(self.active_user)
+
+    def archive_vendor_popup(self, vendor_to_archive):
+        are_you_sure_logout_popup = tk.Toplevel()
+        are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
+        are_you_sure_logout_popup.geometry('500x90')
+        tk.Label(are_you_sure_logout_popup,
+                 text="Are you sure you want to archive this vendor?",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+        yes_i_am = tk.Button(are_you_sure_logout_popup,
+                             text="Yes",
+                             font=self.formatting.medium_step_font,
+                             command=lambda: self.destroy_popup_archive_product_and_reload(
+                                 vendor_to_archive,
+                                 are_you_sure_logout_popup)).grid(
+            row=0, column=1, sticky=tk.W, padx=10, pady=10)
+        no_i_aint = tk.Button(are_you_sure_logout_popup,
+                              text="No",
+                              font=self.formatting.medium_step_font,
+                              command=lambda: are_you_sure_logout_popup.destroy()).grid(
+            row=0, column=2, sticky=tk.W, padx=10, pady=10)
+
+    def destroy_popup_archive_product_and_reload(self, vendor_to_archive, top_level_window):
+        self.edit_db.archive_entry_in_table_by_id("vendors", vendor_to_archive[0])
+        self.parent.display_categories_and_vendors_view(self.active_user)
+        top_level_window.destroy()

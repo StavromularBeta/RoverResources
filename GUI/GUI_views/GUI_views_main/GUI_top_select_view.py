@@ -12,43 +12,56 @@ class TopSelectView(tk.Frame):
         self.active_user = ""
 
     def create_top_view_buttons(self, user):
+        column_count = 0
         self.active_user = user
         tk.Label(self,
                  text="Navigation",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_3,
                  fg=self.formatting.colour_code_1).grid(row=0,
-                                                        column=0,
+                                                        column=column_count,
                                                         sticky=tk.W,
                                                         pady=5)
+        column_count += 1
         log_out_button = tk.Button(self,
                                    text="Log Out",
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.are_you_sure_logout_popup())
-        log_out_button.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        log_out_button.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         display_products_list = tk.Button(self,
                                           text="Categories & Vendors",
                                           font=self.formatting.medium_step_font,
                                           command=lambda:
                                           self.parent.display_categories_and_vendors_view(self.active_user))
-        display_products_list.grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        display_products_list.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         display_products_list = tk.Button(self,
                                           text="Products List",
                                           font=self.formatting.medium_step_font,
                                           command=lambda: self.parent.display_products_list_view(self.active_user))
-        display_products_list.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+        display_products_list.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         display_personal_cart = tk.Button(self,
                                           text="Personal Shopping Cart",
                                           font=self.formatting.medium_step_font,
                                           command=lambda: self.parent.display_shopping_cart_view(self.active_user))
-        display_personal_cart.grid(row=0, column=4, sticky=tk.W, padx=10, pady=5)
+        display_personal_cart.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         if self.active_user[1] == 1:
             display_all_carts = tk.Button(self,
                                           text="All Shopping Carts",
                                           font=self.formatting.medium_step_font,
                                           command=lambda: self.parent.display_admin_shopping_cart_view(
                                               self.active_user))
-            display_all_carts.grid(row=0, column=5, sticky=tk.W, padx=10, pady=5)
+            display_all_carts.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+            column_count += 1
+        orders_view = tk.Button(self,
+                                text="Orders",
+                                font=self.formatting.medium_step_font,
+                                command=lambda: self.parent.display_orders_view(
+                                    self.active_user))
+        orders_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
 
     def are_you_sure_logout_popup(self):
         are_you_sure_logout_popup = tk.Toplevel()

@@ -4,6 +4,7 @@ from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_errorHandling as tk_errorHandling
 
 
 class ProductListView(tk.Frame):
@@ -59,6 +60,7 @@ class ProductListView(tk.Frame):
         self.active_user = ()
         # GUI Formatting
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.error_handling = tk_errorHandling.ErrorHandling()
         # SQL methods
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
@@ -87,6 +89,8 @@ class ProductListView(tk.Frame):
                                                             "Product Sub-Category":
                                                                 "c.category_name, sc.sub_category_name",
                                                             "Product Name": "p.name"}
+        # Error Handling
+        self.historicalDateFailLabel = tk.Label()
 
     # MAIN METHODS ####################################################################################################
 
@@ -170,19 +174,21 @@ class ProductListView(tk.Frame):
                 "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
                 " p.categories_id, p.sub_categories_id, p.unit_of_issue",
                 [["products p", "", "p.categories_id"],
-                ["categories c", "c.id", "p.vendors_id"],
-                ["vendors v", "v.id", "p.sub_categories_id"],
-                ["sub_categories sc", "sc.id", '']],
-                sort_by_variable)
+                 ["categories c", "c.id", "p.vendors_id"],
+                 ["vendors v", "v.id", "p.sub_categories_id"],
+                 ["sub_categories sc", "sc.id", '']],
+                sort_by_variable,
+                no_archive="p.archived")
         else:
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
                 " p.categories_id, p.sub_categories_id, p.unit_of_issue",
                 [["products p", "", "p.categories_id"],
-                ["categories c", "c.id", "p.vendors_id"],
-                ["vendors v", "v.id", "p.sub_categories_id"],
-                ["sub_categories sc", "sc.id", '']],
-                "p.name")
+                 ["categories c", "c.id", "p.vendors_id"],
+                 ["vendors v", "v.id", "p.sub_categories_id"],
+                 ["sub_categories sc", "sc.id", '']],
+                "p.name",
+                no_archive="p.archived")
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
@@ -277,7 +283,7 @@ class ProductListView(tk.Frame):
                                                                                               padx=10,
                                                                                               pady=5)
                 tk.Button(self.products_list_frame,
-                          text="Delete",
+                          text="Archive",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.delete_product_popup(item)).grid(row=row_counter,
                                                                                           column=8,
@@ -622,7 +628,7 @@ class ProductListView(tk.Frame):
     def historical_price_popup(self, product, price, individual_product_popup, add_new_price_popup):
         historical_price_popup = tk.Toplevel()
         historical_price_popup.config(bg=self.formatting.colour_code_1)
-        historical_price_popup.geometry('300x200')
+        historical_price_popup.geometry('400x200')
         year_entry = tk.Entry(historical_price_popup)
         month_entry = tk.Entry(historical_price_popup)
         day_entry = tk.Entry(historical_price_popup)
@@ -650,12 +656,12 @@ class ProductListView(tk.Frame):
         tk.Button(historical_price_popup,
                   text="Add Historical Price",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.add_new_price_query_and_reload_products_page(
-                      (product,
-                       price,
-                       datetime.date(int(year_entry.get()),
-                                     int(month_entry.get()),
-                                     int(day_entry.get()))),
+                  command=lambda: self.check_valid_historical_date_then_add_new_price(
+                      product,
+                      price,
+                      year_entry.get(),
+                      month_entry.get(),
+                      day_entry.get(),
                       individual_product_popup,
                       add_new_price_popup,
                       historical_price_popup)).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
@@ -788,14 +794,15 @@ class ProductListView(tk.Frame):
         are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
         are_you_sure_logout_popup.geometry('500x90')
         tk.Label(are_you_sure_logout_popup,
-                 text="Are you sure you want to delete this product?",
+                 text="Are you sure you want to archive this product?",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
         yes_i_am = tk.Button(are_you_sure_logout_popup,
                              text="Yes",
                              font=self.formatting.medium_step_font,
-                             command=lambda: self.destroy_popup_delete_product_and_reload(
+                             command=lambda: self.destroy_popup_archive_product_and_reload(
+                                 product_to_delete,
                                  are_you_sure_logout_popup)).grid(
             row=0, column=1, sticky=tk.W, padx=10, pady=10)
         no_i_aint = tk.Button(are_you_sure_logout_popup,
@@ -833,14 +840,45 @@ class ProductListView(tk.Frame):
                                                      individual_product_popup,
                                                      new_price_popup,
                                                      historical_price_popup=None):
-        self.add_delete_db.new_price_tracking_record(values)
+        check = self.error_handling.checkNewPrice(values[1])
+        if check:
+            self.add_delete_db.new_price_tracking_record(values)
         individual_product_popup.destroy()
         new_price_popup.destroy()
         if historical_price_popup:
             historical_price_popup.destroy()
         self.parent.display_products_list_view(self.active_user)
 
-    def destroy_popup_delete_product_and_reload(self, top_level_window):
+    def check_valid_historical_date_then_add_new_price(self,
+                                                       product,
+                                                       price,
+                                                       year,
+                                                       month,
+                                                       day,
+                                                       individual_product_popup,
+                                                       add_new_price_popup,
+                                                       historical_price_popup):
+        check = self.error_handling.checkYearMonthDayFormat(year, month, day)
+        price_check = self.error_handling.checkNewPrice(price)
+        if check and price_check:
+            self.add_new_price_query_and_reload_products_page((product,
+                                                               price,
+                                                               datetime.date(year, month, day),
+                                                               ),
+                                                              individual_product_popup,
+                                                              add_new_price_popup,
+                                                              historical_price_popup)
+        else:
+            self.historicalDateFailLabel.destroy()
+            self.historicalDateFailLabel = tk.Label(historical_price_popup,
+                                                    text="Invalid Date or Price Supplied.",
+                                                    font=self.formatting.medium_step_font,
+                                                    bg=self.formatting.colour_code_1,
+                                                    fg=self.formatting.colour_code_3
+                                                    ).grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+
+    def destroy_popup_archive_product_and_reload(self, product_to_archive, top_level_window):
+        self.edit_db.archive_entry_in_table_by_id("products", product_to_archive[0])
         self.parent.display_products_list_view(self.active_user)
         top_level_window.destroy()
 

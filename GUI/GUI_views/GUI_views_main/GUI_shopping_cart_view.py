@@ -109,7 +109,8 @@ class ShoppingCartView(tk.Frame):
                  ["categories c", "c.id", "p.vendors_id"],
                  ["vendors v", "v.id", "p.sub_categories_id"],
                  ["sub_categories sc", "sc.id", ""]],
-                sort_by_variable)
+                sort_by_variable,
+                no_archive="p.archived")
         else:
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
@@ -117,7 +118,8 @@ class ShoppingCartView(tk.Frame):
                  ["categories c", "c.id", "p.vendors_id"],
                  ["vendors v", "v.id", "p.sub_categories_id"],
                  ["sub_categories sc", "sc.id", ""]],
-                "p.name")
+                "p.name",
+                no_archive="p.archived")
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
@@ -239,7 +241,8 @@ class ShoppingCartView(tk.Frame):
                                        ["vendors v", "v.id", "p.categories_id"],
                                        ["categories c", "c.id", "r.price_id"],
                                        ["priceTracking pt", "pt.id", ""]],
-                                      "u.user_name")
+                                      "u.user_name",
+                                      no_archive="r.archived")
         active_user_shopping_cart = []
         for item in self.shopping_cart:
             if item[6] == self.active_user[2]:
