@@ -38,7 +38,7 @@ class Select(Connector):
 
     # SINGLE TABLE SELECT METHODS
 
-    def select_all_from_table(self, table_name, print_view=False, descending_order=False):
+    def select_all_from_table(self, table_name, print_view=False, descending_order=False, no_archived=False):
         """selects all records from a table.
 
         Parameters
@@ -55,9 +55,15 @@ class Select(Connector):
             if True, query is returned from db in descending order.
         """
         if descending_order:
-            query = "SELECT * FROM " + table_name + " ORDER BY id DESC"
+            if no_archived:
+                query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id DESC"
+            else:
+                query = "SELECT * FROM " + table_name + " ORDER BY id DESC"
         else:
-            query = "SELECT * FROM " + table_name + " ORDER BY id"
+            if no_archived:
+                query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id"
+            else:
+                query = "SELECT * FROM " + table_name + " ORDER BY id"
         return self.print_or_return_query(query, False, print_view)
 
     def select_all_from_table_where_one_field_like(self,
@@ -195,7 +201,8 @@ class Select(Connector):
                                   fields_to_select_string,
                                   table_list_of_lists,
                                   order_by_field,
-                                  print_view=False):
+                                  print_view=False,
+                                  no_archive=None):
         """Left joins any amount of tables.
 
         Parameters
@@ -225,5 +232,7 @@ class Select(Connector):
             else:
                 query += " LEFT JOIN " + item[0] + " ON " + table_list_of_lists[table_index-1][2] + " = " + item[1]
                 table_index += 1
+        if no_archive:
+            query += " WHERE " + no_archive + " = False"
         query += " ORDER BY " + order_by_field
         return self.print_or_return_query(query, False, print_view)

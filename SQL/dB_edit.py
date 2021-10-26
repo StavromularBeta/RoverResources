@@ -13,3 +13,7 @@ class EditDb(Connector):
     def edit_one_record_one_field_one_table(self, table, field, update, product_id):
         query = "UPDATE " + table + " SET " + field + " = '" + str(update) + "' WHERE id = " + str(product_id)
         return self.db_connector(query)
+
+    def archive_entry_in_table_by_id(self, table, record_id):
+        query = "UPDATE " + table + " SET archived = True WHERE id = " + str(record_id)
+        return self.db_connector(query)

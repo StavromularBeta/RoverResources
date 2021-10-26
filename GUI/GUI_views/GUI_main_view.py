@@ -6,6 +6,7 @@ from GUI.GUI_views.GUI_views_main import GUI_categories_vendors_view as cv
 from GUI.GUI_views.GUI_views_main import GUI_product_list_view as pl
 from GUI.GUI_views.GUI_views_main import GUI_shopping_cart_view as sc
 from GUI.GUI_views.GUI_views_main import GUI_shopping_cart_view_admin as sc_admin
+from GUI.GUI_views.GUI_views_main import GUI_orders_view as ord
 
 
 class MainWindow(tk.Frame):
@@ -17,6 +18,7 @@ class MainWindow(tk.Frame):
         self.product_list_view = pl.ProductListView(self)
         self.shopping_cart_view = sc.ShoppingCartView(self)
         self.shopping_cart_view_admin = sc_admin.ShoppingCartViewAdmin(self)
+        self.orders_view = ord.OrdersView(self)
 
     def clear_main_window(self):
         for widget in self.winfo_children():
@@ -27,6 +29,7 @@ class MainWindow(tk.Frame):
         self.product_list_view = pl.ProductListView(self)
         self.shopping_cart_view = sc.ShoppingCartView(self)
         self.shopping_cart_view_admin = sc_admin.ShoppingCartViewAdmin(self)
+        self.orders_view = ord.OrdersView(self)
 
     def display_login_view(self):
         self.clear_main_window()
@@ -63,4 +66,11 @@ class MainWindow(tk.Frame):
         self.shopping_cart_view_admin.shopping_cart_view_admin(user, sort_by)
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.shopping_cart_view_admin.grid()
+
+    def display_orders_view(self, user, sort_by=False):
+        self.clear_main_window()
+        self.display_top_frame_select_button_view(user)
+        self.orders_view.orders_view(user, sort_by)
+        self.top_select_view.grid(sticky=tk.W, padx=10)
+        self.orders_view.grid()
 

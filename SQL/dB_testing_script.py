@@ -121,9 +121,9 @@ new_selection.select_all_from_table("users", True)
 new_entry.new_credentials_record(("Full", "Grants Full Access to all functionality."))
 new_entry.new_credentials_record(("Basic", "Grants the lowest level of functionality."))
 
-new_entry.new_user_record((2, "Peter", "12345", "Programmer"))
-new_entry.new_user_record((2, "Rachel", "12345", "Made Up Person"))
-new_entry.new_user_record((1, "Wendy", "12345", "Manager"))
+new_entry.new_user_record((2, "Staff", "12345", "For anyone to use."))
+new_entry.new_user_record((2, "Beth", "12345", "Beth. "))
+new_entry.new_user_record((1, "Wendy", "12345", "Manager. "))
 
 new_entry.new_categories_record(("standards", "analytical standards for QC of methods."))
 new_entry.new_categories_record(("media", "media for culturing bacteria."))
