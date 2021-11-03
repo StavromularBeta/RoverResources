@@ -61,3 +61,9 @@ class ErrorHandling:
             test_pass = False
             return test_pass
         return test_pass
+
+    def checkBlankEntry(self, entry_to_check):
+        test_pass = True
+        if len(str(entry_to_check)) == 0:
+            test_pass = False
+        return test_pass

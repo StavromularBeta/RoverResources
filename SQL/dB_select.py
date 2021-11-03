@@ -38,7 +38,12 @@ class Select(Connector):
 
     # SINGLE TABLE SELECT METHODS
 
-    def select_all_from_table(self, table_name, print_view=False, descending_order=False, no_archived=False):
+    def select_all_from_table(self,
+                              table_name,
+                              print_view=False,
+                              descending_order=False,
+                              no_archived=False,
+                              no_approved=False):
         """selects all records from a table.
 
         Parameters
@@ -56,14 +61,27 @@ class Select(Connector):
         """
         if descending_order:
             if no_archived:
-                query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id DESC"
+                if no_approved:
+                    query = "SELECT * FROM " + table_name +\
+                            " WHERE archived = False AND approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id DESC"
             else:
-                query = "SELECT * FROM " + table_name + " ORDER BY id DESC"
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " ORDER BY id DESC"
         else:
             if no_archived:
-                query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id"
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE archived = False AND approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE archived = False ORDER BY id"
             else:
-                query = "SELECT * FROM " + table_name + " ORDER BY id"
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " ORDER BY id"
         return self.print_or_return_query(query, False, print_view)
 
     def select_all_from_table_where_one_field_like(self,
@@ -71,7 +89,9 @@ class Select(Connector):
                                                    field_name,
                                                    condition,
                                                    print_view=False,
-                                                   descending_order=False):
+                                                   descending_order=False,
+                                                   no_archive=False,
+                                                   no_approved=False):
         """selects all records from a table, where a particular field matches (using like) a condition. This allows
         for partial matches when combined with regex.
 
@@ -95,9 +115,33 @@ class Select(Connector):
             if True, query is returned from db in descending order.
         """
         if descending_order:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id DESC"
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND archived = False AND approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND archived = False ORDER BY id DESC"
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id DESC"
         else:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id"
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND archived = False AND approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND archived = False ORDER BY id"
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " LIKE (?) AND approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name + " LIKE (?) ORDER BY id"
         return self.print_or_return_query(query, (condition,), print_view)
 
     def select_all_from_table_where_one_field_equals(self,
@@ -105,7 +149,9 @@ class Select(Connector):
                                                      field_name,
                                                      condition,
                                                      print_view=False,
-                                                     descending_order=False):
+                                                     descending_order=False,
+                                                     no_archive=False,
+                                                     no_approved=False):
         """selects all records from a table, where a particular field matches (using equals) a condition. Matches must
         be exact.
 
@@ -129,9 +175,33 @@ class Select(Connector):
             if True, query is returned from db in descending order.
         """
         if descending_order:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id DESC"
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False AND approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False ORDER BY id DESC"
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND approved = True ORDER BY id DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id DESC"
         else:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id"
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND archived = False AND approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND archived = False ORDER BY id"
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND approved = True ORDER BY id"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY id"
         return self.print_or_return_query(query, (condition,), print_view)
 
     def select_all_from_table_where_one_field_equals_order_by(self,
