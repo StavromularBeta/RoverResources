@@ -3,6 +3,7 @@ from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_errorHandling as tk_errorHandling
 import datetime
 
 
@@ -13,6 +14,7 @@ class CategoriesVendorsView(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.error_handling = tk_errorHandling.ErrorHandling()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
         self.edit_db = dB_edit.EditDb()
@@ -34,11 +36,11 @@ class CategoriesVendorsView(tk.Frame):
 
     # MAIN METHODS
 
-    def categories_and_vendors_view(self, user):
+    def categories_and_vendors_view(self, user, vendor_search=False):
         self.active_user = user
         self.create_vendors_navigation_frame()
         self.create_categories_navigation_frame()
-        self.create_vendors_list()
+        self.create_vendors_list(vendor_search)
         self.create_categories_list()
 
     def create_vendors_navigation_frame(self):
@@ -60,11 +62,29 @@ class CategoriesVendorsView(tk.Frame):
             tk.Button(self.vendors_navigation_frame,
                       text="Request New Vendor",
                       font=self.formatting.medium_step_font,
-                      command=lambda: print("request new vendor")).grid(row=0,
-                                                                        column=1,
-                                                                        sticky=tk.W,
-                                                                        padx=10,
-                                                                        pady=5)
+                      command=lambda: self.add_new_vendor_or_category_popup("vendors", True)).grid(row=0,
+                                                                                                   column=1,
+                                                                                                   sticky=tk.W,
+                                                                                                   padx=10,
+                                                                                                   pady=5)
+        tk.Label(self.vendors_navigation_frame,
+                 text="Search: ",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, padx=5, pady=5)
+        vendor_search_entry = tk.Entry(self.vendors_navigation_frame)
+        vendor_search_entry.grid(row=0, column=3, sticky=tk.W, pady=5)
+        tk.Button(self.vendors_navigation_frame,
+                  text="Search",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_categories_and_vendors_view(self.active_user,
+                                                                                  vendor_search_entry.get())).grid(
+            row=0, column=4, sticky=tk.W, padx=5, pady=5)
+        tk.Button(self.vendors_navigation_frame,
+                  text="All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_categories_and_vendors_view(self.active_user)).grid(
+            row=0, column=5, sticky=tk.W, padx=5, pady=5)
         self.vendors_navigation_frame.grid(row=0, column=0, sticky=tk.W, pady=5)
 
     def create_categories_navigation_frame(self):
@@ -86,15 +106,16 @@ class CategoriesVendorsView(tk.Frame):
             tk.Button(self.categories_navigation_frame,
                       text="Request New Category",
                       font=self.formatting.medium_step_font,
-                      command=lambda: print("button")).grid(row=0,
-                                                            column=1,
-                                                            sticky=tk.W,
-                                                            padx=10,
-                                                            pady=5)
-        self.categories_navigation_frame.grid(row=0, column=1, sticky=tk.W, pady=5)
+                      command=lambda: self.add_new_vendor_or_category_popup("categories", True)).grid(
+                row=0,
+                column=1,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+        self.categories_navigation_frame.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
 
-    def create_vendors_list(self):
-        self.get_vendors_list_from_database()
+    def create_vendors_list(self, vendor_search=False):
+        self.get_vendors_list_from_database(vendor_search)
         self.populate_scrollable_vendors_list()
         self.create_scrollable_vendors_list()
         self.vendors_list_scrollable_container.grid(row=1, column=0, sticky=tk.W, pady=5)
@@ -103,12 +124,19 @@ class CategoriesVendorsView(tk.Frame):
         self.get_categories_list_from_database()
         self.populate_scrollable_categories_list()
         self.create_scrollable_categories_list()
-        self.categories_list_scrollable_container.grid(row=1, column=1, sticky=tk.W, pady=5)
+        self.categories_list_scrollable_container.grid(row=1, column=1, sticky=tk.W, padx=10, pady=5)
 
     # PRODUCTS LIST METHODS
 
-    def get_vendors_list_from_database(self):
-        self.vendors_list = self.select_db.select_all_from_table("vendors", no_archived=True)
+    def get_vendors_list_from_database(self, vendor_search=None):
+        if vendor_search:
+            self.vendors_list = self.select_db.select_all_from_table_where_one_field_like("vendors",
+                                                                                          "vendor_name",
+                                                                                          '%' + vendor_search + '%',
+                                                                                          no_archive=True,
+                                                                                          no_approved=True)
+        else:
+            self.vendors_list = self.select_db.select_all_from_table("vendors", no_archived=True, no_approved=True)
 
     def create_scrollable_vendors_list(self):
         products_list_canvas = tk.Canvas(self.vendors_list_scrollable_container,
@@ -157,21 +185,22 @@ class CategoriesVendorsView(tk.Frame):
                 tk.Button(self.vendors_list_frame,
                           text="Archive",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.archive_vendor_popup(item)).grid(row=row_counter,
-                                                                                          column=8,
-                                                                                          sticky=tk.W,
-                                                                                          padx=10,
-                                                                                          pady=5)
+                          command=lambda item=item: self.archive_vendor_popup(item,
+                                                                              "vendors")).grid(row=row_counter,
+                                                                                               column=8,
+                                                                                               sticky=tk.W,
+                                                                                               padx=10,
+                                                                                               pady=5)
             else:
                 tk.Button(self.vendors_list_frame,
                           text="View Notes",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.vendor_or_category_popup("vendors",
-                                                                                 item)).grid(row=row_counter,
-                                                                                             column=2,
-                                                                                             sticky=tk.W,
-                                                                                             padx=10,
-                                                                                             pady=5)
+                                                                                  item)).grid(row=row_counter,
+                                                                                              column=2,
+                                                                                              sticky=tk.W,
+                                                                                              padx=10,
+                                                                                              pady=5)
             self.vendors_canvas_length += 50
             row_counter += 1
             even_odd += 1
@@ -179,7 +208,7 @@ class CategoriesVendorsView(tk.Frame):
 # SHOPPING CART METHODS
 
     def get_categories_list_from_database(self):
-        self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True)
+        self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True, no_approved=True)
 
     def populate_scrollable_categories_list(self):
         row_counter = 0
@@ -194,28 +223,27 @@ class CategoriesVendorsView(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            tk.Button(self.categories_list_frame,
+                      text="Open",
+                      font=self.formatting.medium_step_font,
+                      command=lambda item=item: self.vendor_or_category_popup(
+                        "categories",
+                        item
+                        )).grid(row=row_counter,
+                                column=2,
+                                sticky=tk.W,
+                                padx=10,
+                                pady=5)
             if self.active_user[1] == 1:
                 tk.Button(self.categories_list_frame,
-                          text="Open",
+                          text="Archive",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.vendor_or_category_popup(
-                            "categories",
-                            item
-                          )).grid(row=row_counter,
-                                  column=2,
-                                  sticky=tk.W,
-                                  padx=10,
-                                  pady=5)
-            else:
-                tk.Button(self.categories_list_frame,
-                          text="View Notes",
-                          font=self.formatting.medium_step_font,
-                          command=lambda item=item:self.vendor_or_category_popup("categories",
-                                                                                 item)).grid(row=row_counter,
-                                                                                             column=2,
-                                                                                             sticky=tk.W,
-                                                                                             padx=10,
-                                                                                             pady=5)
+                          command=lambda item=item: self.archive_vendor_popup(item,
+                                                                              "categories")).grid(row=row_counter,
+                                                                                                  column=8,
+                                                                                                  sticky=tk.W,
+                                                                                                  padx=10,
+                                                                                                  pady=5)
             self.categories_canvas_length += 50
             row_counter += 1
             even_odd += 1
@@ -276,6 +304,13 @@ class CategoriesVendorsView(tk.Frame):
                           font=self.formatting.medium_step_font,
                           command=lambda: self.edit_sub_categories_popup(vendor_or_category, vendor_or_category_popup)
                           ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
+        else:
+            if table_to_edit == "categories":
+                tk.Button(vendor_or_category_popup,
+                          text="View Sub-Categories",
+                          font=self.formatting.medium_step_font,
+                          command=lambda: self.edit_sub_categories_popup(vendor_or_category, vendor_or_category_popup)
+                          ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
 
     def edit_notes_popup(self, table_to_edit, vendor_or_category, individual_cat_vend_popup):
         edit_notes_popup = tk.Toplevel()
@@ -300,30 +335,10 @@ class CategoriesVendorsView(tk.Frame):
                                                                                      )).grid(
             row=1, column=0, sticky=tk.W, padx=10, pady=10)
 
-    def edit_name_popup(self, table_to_edit, vendor_or_category, individual_cat_vend_popup):
-        edit_notes_popup = tk.Toplevel()
-        edit_notes_popup.config(bg=self.formatting.colour_code_1)
-        edit_notes_popup.geometry('500x90')
-        product_notes = tk.Entry(edit_notes_popup)
-        product_notes.config(state=tk.NORMAL)
-        product_notes.insert(tk.END, vendor_or_category[1])
-        product_notes.grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
-        tk.Button(edit_notes_popup,
-                  text="Commit Changess",
-                  font=self.formatting.medium_step_font,
-                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(table_to_edit,
-                                                                                     product_notes.get(),
-                                                                                     vendor_or_category,
-                                                                                     "name check",
-                                                                                     individual_cat_vend_popup,
-                                                                                     edit_notes_popup
-                                                                                     )).grid(
-            row=0, column=1, sticky=tk.W, padx=10, pady=10)
-
-    def add_new_vendor_or_category_popup(self, table_to_add_to):
+    def add_new_vendor_or_category_popup(self, table_to_add_to, request=False):
         add_new_popup = tk.Toplevel()
         add_new_popup.config(bg=self.formatting.colour_code_1)
-        add_new_popup.geometry('500x250')
+        add_new_popup.geometry('500x350')
         tk.Label(add_new_popup,
                  text="Name: ",
                  font=self.formatting.medium_step_font,
@@ -347,14 +362,27 @@ class CategoriesVendorsView(tk.Frame):
             add_new_text = "Vendor"
         else:
             add_new_text = "Category"
-        tk.Button(add_new_popup,
-                  text="Add new " + add_new_text,
-                  font=self.formatting.medium_step_font,
-                  command=lambda: self.add_new_vendor_or_category(table_to_add_to,
-                                                                  (vendor_or_category_name.get(),
-                                                                   vendor_or_category_notes.get("1.0", tk.END)),
-                                                                  add_new_popup)).grid(
-            row=3, column=0, sticky=tk.W, padx=10, pady=10)
+        if self.active_user[1] == 1:
+            tk.Button(add_new_popup,
+                      text="Add new " + add_new_text,
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.check_for_blank_new_vendor_or_category(table_to_add_to,
+                                                                                  vendor_or_category_name.get(),
+                                                                                  vendor_or_category_notes.get("1.0",
+                                                                                                               tk.END),
+                                                                                  add_new_popup)).grid(
+                row=3, column=0, sticky=tk.W, padx=10, pady=10)
+        else:
+            tk.Button(add_new_popup,
+                      text="Request new " + add_new_text,
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.check_for_blank_new_vendor_or_category(table_to_add_to,
+                                                                                  vendor_or_category_name.get(),
+                                                                                  vendor_or_category_notes.get("1.0",
+                                                                                                               tk.END),
+                                                                                  add_new_popup,
+                                                                                  request)).grid(
+                row=3, column=0, sticky=tk.W, padx=10, pady=10)
 
     def edit_sub_categories_popup(self,
                                   current_category_record,
@@ -362,10 +390,12 @@ class CategoriesVendorsView(tk.Frame):
         row_counter = 0
         edit_subcategories_popup = tk.Toplevel()
         edit_subcategories_popup.config(bg=self.formatting.colour_code_1)
-        edit_subcategories_popup.geometry('600x150')
+        edit_subcategories_popup.geometry('600x300')
         category_sub_cats = self.select_db.select_all_from_table_where_one_field_equals("sub_categories",
                                                                                         "categories_id",
-                                                                                        current_category_record[0])
+                                                                                        current_category_record[0],
+                                                                                        no_archive=True,
+                                                                                        no_approved=True)
         category_sub_cats_list = []
         category_sub_cats_dict = {}
         for item in category_sub_cats:
@@ -373,10 +403,17 @@ class CategoriesVendorsView(tk.Frame):
                 pass
             else:
                 category_sub_cats_list.append(item[2])
-                category_sub_cats_dict[item[2]] = item[0]
+                category_sub_cats_dict[item[2]] = item
         if len(category_sub_cats_list) == 0:
             pass
         else:
+            tk.Label(edit_subcategories_popup,
+                     text="Existing Subcategories",
+                     font=self.formatting.homepage_window_select_button_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter, column=0, columnspan=2, sticky=tk.W, pady=10, padx=10)
+            row_counter += 1
             sub_category_value = tk.StringVar(edit_subcategories_popup)
             sub_category_value.set(category_sub_cats_list[0])
             sub_category_menu = tk.OptionMenu(edit_subcategories_popup,
@@ -384,55 +421,215 @@ class CategoriesVendorsView(tk.Frame):
                                               *category_sub_cats_list,)
             sub_category_menu.config(highlightbackground=self.formatting.colour_code_1)
             sub_category_menu.config(font=self.formatting.medium_step_font)
-            sub_category_menu.grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=10)
+            sub_category_menu.grid(row=row_counter, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
             if self.active_user[1] == 1:
                 tk.Button(edit_subcategories_popup,
-                          text="Delete Selected",
+                          text="Archive",
                           font=self.formatting.medium_step_font,
-                          command=lambda: print("delete subcategory")).grid(
-                    row=row_counter, column=1, sticky=tk.W, padx=10, pady=10)
-                tk.Button(edit_subcategories_popup,
-                          text="Edit Selected",
-                          font=self.formatting.medium_step_font,
-                          command=lambda: print("edit subcategory")).grid(
+                          command=lambda: self.archive_subcategory_and_reload_page(
+                              category_sub_cats_dict[sub_category_value.get()][0],
+                              edit_subcategories_popup,
+                              vendor_or_category_popup)).grid(
                     row=row_counter, column=2, sticky=tk.W, padx=10, pady=10)
+                tk.Button(edit_subcategories_popup,
+                          text="Edit Name",
+                          font=self.formatting.medium_step_font,
+                          command=lambda: self.edit_name_popup("sub_categories",
+                                                               category_sub_cats_dict[sub_category_value.get()],
+                                                               edit_subcategories_popup,
+                                                               True)).grid(
+                    row=row_counter, column=3, sticky=tk.W, padx=10, pady=10)
             row_counter += 1
+        if self.active_user[1] == 1:
+            tk.Label(edit_subcategories_popup,
+                     text="Add New Subcategory",
+                     font=self.formatting.homepage_window_select_button_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                     row=row_counter, column=0, columnspan=3, sticky=tk.W, pady=10, padx=10)
+        else:
+            tk.Label(edit_subcategories_popup,
+                     text="Request New Subcategory",
+                     font=self.formatting.homepage_window_select_button_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                     row=row_counter, column=0, columnspan=3, sticky=tk.W, pady=10, padx=10)
+        row_counter += 1
         tk.Label(edit_subcategories_popup,
                  text="Name: ",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=row_counter, column=0, sticky=tk.W, pady=10, padx=10)
-        vendor_or_category_name = tk.Entry(edit_subcategories_popup)
-        vendor_or_category_name.config(state=tk.NORMAL)
-        vendor_or_category_name.grid(row=row_counter, column=1, sticky=tk.W, pady=10)
+        subcategory_name = tk.Entry(edit_subcategories_popup)
+        subcategory_name.config(state=tk.NORMAL)
+        subcategory_name.grid(row=row_counter, column=1, sticky=tk.W, pady=10)
         if self.active_user[1] == 1:
+            row_counter += 1
             tk.Button(edit_subcategories_popup,
                       text="Add new Subcategory",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.add_new_sub_category((current_category_record[0],
-                                                                vendor_or_category_name.get(),
-                                                                ""),
-                                                                edit_subcategories_popup,
-                                                                vendor_or_category_popup)).grid(
-                row=row_counter, column=2, sticky=tk.W, padx=10, pady=10)
+                      command=lambda: self.check_for_blank_sub_category(current_category_record[0],
+                                                                        subcategory_name.get(),
+                                                                        "",
+                                                                        edit_subcategories_popup,
+                                                                        vendor_or_category_popup,
+                                                                        row_counter)).grid(
+                row=row_counter-1, column=2, columnspan=2, sticky=tk.W, padx=10, pady=10)
+        else:
+            row_counter += 1
+            tk.Button(edit_subcategories_popup,
+                      text="Request new Subcategory",
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.check_for_blank_sub_category(current_category_record[0],
+                                                                        subcategory_name.get(),
+                                                                        "",
+                                                                        edit_subcategories_popup,
+                                                                        vendor_or_category_popup,
+                                                                        row_counter,
+                                                                        True)).grid(
+                row=row_counter-1, column=2, columnspan=2, sticky=tk.W, padx=10, pady=10)
 
-    def add_new_sub_category(self,
-                             values,
-                             edit_subcategories_popup,
-                             vendor_or_category_popup):
-        self.add_delete_db.new_sub_categories_record(values)
+    def edit_name_popup(self, table_to_edit, vendor_or_category, individual_cat_vend_popup, sub_category=False):
+        edit_notes_popup = tk.Toplevel()
+        edit_notes_popup.config(bg=self.formatting.colour_code_1)
+        edit_notes_popup.geometry('500x90')
+        edit_name_entry = tk.Entry(edit_notes_popup)
+        edit_name_entry.config(state=tk.NORMAL)
+        if sub_category:
+            edit_name_entry.insert(tk.END, vendor_or_category[2])
+        else:
+            edit_name_entry.insert(tk.END, vendor_or_category[1])
+        edit_name_entry.grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+        tk.Button(edit_notes_popup,
+                  text="Commit Changes",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.check_for_blank_name_edit(table_to_edit,
+                                                                 edit_name_entry.get(),
+                                                                 vendor_or_category,
+                                                                 individual_cat_vend_popup,
+                                                                 edit_notes_popup)).grid(
+            row=0, column=1, sticky=tk.W, padx=10, pady=10)
+
+    def check_for_blank_name_edit(self,
+                                  table_to_edit,
+                                  name_to_edit,
+                                  vendor_or_category,
+                                  individual_cat_vendor_popup,
+                                  edit_notes_popup):
+        check = self.error_handling.checkBlankEntry(name_to_edit)
+        if check:
+            self.commit_edit_query_close_edit_popup_and_reload(table_to_edit,
+                                                               name_to_edit,
+                                                               vendor_or_category,
+                                                               "name check",
+                                                               individual_cat_vendor_popup,
+                                                               edit_notes_popup
+                                                               )
+        else:
+            tk.Label(edit_notes_popup,
+                     text="Name cannot be blank.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=1, column=0, columnspan=2, sticky=tk.W, pady=10, padx=10)
+
+    def archive_subcategory_and_reload_page(self,
+                                            subcategory_to_archive,
+                                            edit_subcategories_popup,
+                                            vendor_or_category_popup):
+        self.edit_db.archive_entry_in_table_by_id("sub_categories", subcategory_to_archive)
         edit_subcategories_popup.destroy()
         vendor_or_category_popup.destroy()
         self.parent.display_categories_and_vendors_view(self.active_user)
 
+    def check_for_blank_sub_category(self,
+                                     current_category_record_id,
+                                     subcategory_name,
+                                     subcategory_comments,
+                                     edit_subcategories_popup,
+                                     vendor_or_category_popup,
+                                     row_counter,
+                                     request=False):
+        check = self.error_handling.checkBlankEntry(subcategory_name)
+        if check:
+            if request:
+                self.add_new_sub_category((current_category_record_id,
+                                           subcategory_name,
+                                           subcategory_comments,
+                                           "0"),
+                                          edit_subcategories_popup,
+                                          vendor_or_category_popup,
+                                          request)
+            else:
+                self.add_new_sub_category((current_category_record_id,
+                                           subcategory_name,
+                                           subcategory_comments),
+                                          edit_subcategories_popup,
+                                          vendor_or_category_popup)
+        else:
+            tk.Label(edit_subcategories_popup,
+                     text="Name cannot be blank.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=row_counter, column=0, columnspan=2, sticky=tk.W, pady=10, padx=10)
+
+    def add_new_sub_category(self,
+                             values,
+                             edit_subcategories_popup,
+                             vendor_or_category_popup,
+                             request=False):
+        if request:
+            self.add_delete_db.new_sub_categories_record(values, request)
+        else:
+            self.add_delete_db.new_sub_categories_record(values)
+        edit_subcategories_popup.destroy()
+        vendor_or_category_popup.destroy()
+        self.parent.display_categories_and_vendors_view(self.active_user)
+
+    def check_for_blank_new_vendor_or_category(self,
+                                               table_to_add_to,
+                                               vendor_cat_name,
+                                               vendor_cat_comments,
+                                               add_new_popup,
+                                               request=False):
+        check = self.error_handling.checkBlankEntry(vendor_cat_name)
+        if check:
+            if request:
+                self.add_new_vendor_or_category(table_to_add_to,
+                                                (vendor_cat_name,
+                                                 vendor_cat_comments,
+                                                 "0"),
+                                                add_new_popup,
+                                                request)
+            else:
+                self.add_new_vendor_or_category(table_to_add_to,
+                                                (vendor_cat_name,
+                                                 vendor_cat_comments),
+                                                add_new_popup)
+        else:
+            tk.Label(add_new_popup,
+                     text="Name cannot be blank.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=4, column=0, columnspan=2, sticky=tk.W, pady=10, padx=10)
+
     def add_new_vendor_or_category(self,
                                    table_to_add_to,
                                    values,
-                                   add_new_window):
+                                   add_new_window,
+                                   request=False):
         if table_to_add_to == "vendors":
-            self.add_delete_db.new_vendors_record(values)
+            if request:
+                self.add_delete_db.new_vendors_record(values, request)
+            else:
+                self.add_delete_db.new_vendors_record(values)
         else:
-            self.add_delete_db.new_categories_record(values)
+            if request:
+                self.add_delete_db.new_categories_record(values, request)
+            else:
+                self.add_delete_db.new_categories_record(values)
         add_new_window.destroy()
         self.parent.display_categories_and_vendors_view(self.active_user)
 
@@ -446,6 +643,8 @@ class CategoriesVendorsView(tk.Frame):
         if field_to_edit == "name check":
             if table_to_edit == "categories":
                 field_to_edit = "category_name"
+            elif table_to_edit == "sub_categories":
+                field_to_edit = "sub_category_name"
             else:
                 field_to_edit = "vendor_name"
         try:
@@ -460,12 +659,12 @@ class CategoriesVendorsView(tk.Frame):
         category_vendor_window.destroy()
         self.parent.display_categories_and_vendors_view(self.active_user)
 
-    def archive_vendor_popup(self, vendor_to_archive):
+    def archive_vendor_popup(self, vendor_to_archive, table_to_access):
         are_you_sure_logout_popup = tk.Toplevel()
         are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
         are_you_sure_logout_popup.geometry('500x90')
         tk.Label(are_you_sure_logout_popup,
-                 text="Are you sure you want to archive this vendor?",
+                 text="Are you sure you want to archive?",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
@@ -474,7 +673,8 @@ class CategoriesVendorsView(tk.Frame):
                              font=self.formatting.medium_step_font,
                              command=lambda: self.destroy_popup_archive_product_and_reload(
                                  vendor_to_archive,
-                                 are_you_sure_logout_popup)).grid(
+                                 are_you_sure_logout_popup,
+                                 table_to_access)).grid(
             row=0, column=1, sticky=tk.W, padx=10, pady=10)
         no_i_aint = tk.Button(are_you_sure_logout_popup,
                               text="No",
@@ -482,7 +682,7 @@ class CategoriesVendorsView(tk.Frame):
                               command=lambda: are_you_sure_logout_popup.destroy()).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
-    def destroy_popup_archive_product_and_reload(self, vendor_to_archive, top_level_window):
-        self.edit_db.archive_entry_in_table_by_id("vendors", vendor_to_archive[0])
+    def destroy_popup_archive_product_and_reload(self, vendor_to_archive, top_level_window, table_to_access):
+        self.edit_db.archive_entry_in_table_by_id(table_to_access, vendor_to_archive[0])
         self.parent.display_categories_and_vendors_view(self.active_user)
         top_level_window.destroy()

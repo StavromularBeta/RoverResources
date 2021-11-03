@@ -8,7 +8,7 @@ class AddDelete(Connector):
 
     # ADDING METHODS
 
-    def new_categories_record(self, values):
+    def new_categories_record(self, values, request=False):
         """Inserts new record into categories table. Categories table holds different categories of products the lab
         might purchase.
 
@@ -18,10 +18,13 @@ class AddDelete(Connector):
         values : tuple
             (category name, comments)
         """
-        query = 'INSERT OR IGNORE INTO categories (category_name, comments) VALUES (?,?)'
+        if request:
+            query = 'INSERT OR IGNORE INTO categories (category_name, comments, approved) VALUES (?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE INTO categories (category_name, comments) VALUES (?,?)'
         return self.db_connector(query, values)
 
-    def new_sub_categories_record(self, values):
+    def new_sub_categories_record(self, values, request=False):
         """Inserts new record into sub categories table. Sub categories table allows further division of categories.
         Mostly used for subdividing standards.
 
@@ -31,10 +34,14 @@ class AddDelete(Connector):
         values : tuple
             (categories ID, category name, comments)
         """
-        query = 'INSERT OR IGNORE INTO sub_categories (categories_id, sub_category_name, comments) VALUES (?,?,?)'
+        if request:
+            query = 'INSERT OR IGNORE INTO ' +\
+                    'sub_categories (categories_id, sub_category_name, comments, approved) VALUES (?,?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE INTO sub_categories (categories_id, sub_category_name, comments) VALUES (?,?,?)'
         return self.db_connector(query, values)
 
-    def new_vendors_record(self, values):
+    def new_vendors_record(self, values, request=False):
         """Inserts new record into vendors table. Vendors table holds different vendors that might sell products to the
         lab.
 
@@ -44,7 +51,10 @@ class AddDelete(Connector):
         values : tuple
             (vendor name, comments)
         """
-        query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments) VALUES (?, ?)'
+        if request:
+            query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments, approved) VALUES (?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments) VALUES (?,?)'
         return self.db_connector(query, values)
 
     def new_products_record(self, values):
