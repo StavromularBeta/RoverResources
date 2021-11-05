@@ -46,14 +46,14 @@ class ShoppingCartViewAdmin(tk.Frame):
 
     # MAIN METHOD
 
-    def shopping_cart_view_admin(self, user, sort_by=False):
+    def shopping_cart_view_admin(self, user, sort_by=False, search_by=False):
         self.active_user = user
-        self.create_shopping_cart(sort_by)
+        self.create_shopping_cart(sort_by, search_by)
 
     # SHOPPING CART METHODS
 
-    def create_shopping_cart(self, sort_by=False):
-        self.get_active_user_shopping_cart_from_database(sort_by)
+    def create_shopping_cart(self, sort_by=False, search_by=False):
+        self.get_active_user_shopping_cart_from_database(sort_by, search_by)
         self.make_scrollable_shopping_cart_header_labels()
         self.populate_scrollable_shopping_cart()
         self.create_scrollable_shopping_cart()
@@ -73,26 +73,64 @@ class ShoppingCartViewAdmin(tk.Frame):
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.E, padx=10, pady=5)
         tk.Label(self.shopping_cart_navigation_frame,
-                 text="Sort Carts",
+                 text="Sort: ",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
-                 fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+                 fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, pady=5)
         type_of_sort_menu = tk.OptionMenu(self.shopping_cart_navigation_frame,
                                           self.shopping_cart_sort_value,
                                           *self.sort_shopping_cart_view_by)
         type_of_sort_menu.config(highlightbackground=self.formatting.colour_code_2)
         type_of_sort_menu.config(font=self.formatting.medium_step_font)
-        type_of_sort_menu.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+        type_of_sort_menu.grid(row=0, column=3, sticky=tk.W, pady=5)
         sort_by_button = tk.Button(self.shopping_cart_navigation_frame,
-                                   text="Sort Carts",
+                                   text="Sort",
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_admin_shopping_cart_view(
                                        self.active_user,
                                        self.shopping_cart_sort_value.get())).grid(
             row=0, column=4, sticky=tk.W, padx=10, pady=5
         )
+        tk.Label(self.shopping_cart_navigation_frame,
+                 text="Search:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
+        product_search_entry = tk.Entry(self.shopping_cart_navigation_frame)
+        product_search_entry.grid(row=0, column=6, sticky=tk.W, padx=10, pady=5)
+        search_by_button = tk.Button(self.shopping_cart_navigation_frame,
+                                     text="Name",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_admin_shopping_cart_view(
+                                       self.active_user,
+                                       search_by=["p.name", '%' + product_search_entry.get() + '%'])).grid(
+            row=0, column=7, sticky=tk.W, pady=5
+        )
+        search_by_button = tk.Button(self.shopping_cart_navigation_frame,
+                                     text="Vendor",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_admin_shopping_cart_view(
+                                       self.active_user,
+                                       search_by=["v.vendor_name", '%' + product_search_entry.get() + '%'])).grid(
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
+        )
+        search_by_button = tk.Button(self.shopping_cart_navigation_frame,
+                                     text="Category",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_admin_shopping_cart_view(
+                                       self.active_user,
+                                       search_by=["c.category_name", '%' + product_search_entry.get() + '%'])).grid(
+            row=0, column=9, sticky=tk.W, pady=5
+        )
+        tk.Button(self.shopping_cart_navigation_frame,
+                  text="All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_admin_shopping_cart_view(
+                      self.active_user)).grid(
+            row=0, column=10, sticky=tk.W, padx=10, pady=5
+        )
 
-    def get_active_user_shopping_cart_from_database(self, sort_by=None):
+    def get_active_user_shopping_cart_from_database(self, sort_by=None, search_by=None):
         if sort_by:
             sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[sort_by]
             self.shopping_cart_sort_value.set(sort_by)
@@ -107,6 +145,19 @@ class ShoppingCartViewAdmin(tk.Frame):
                                            ["priceTracking pt", "pt.id", ""]],
                                           sort_by_variable,
                                           no_archive="r.archived")
+        elif search_by:
+            self.shopping_cart = self.select_db.\
+                left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date," +
+                                          " r.amount, u.user_name, p.unit_of_issue, pt.cost, r.id",
+                                          [["requests r", "", "r.products_id"],
+                                           ["products p", "p.id", "r.users_id"],
+                                           ["users u", "u.id", "p.vendors_id"],
+                                           ["vendors v", "v.id", "p.categories_id"],
+                                           ["categories c", "c.id", "r.price_id"],
+                                           ["priceTracking pt", "pt.id", ""]],
+                                          "p.name",
+                                          no_archive="r.archived",
+                                          search_by=search_by)
         else:
             self.shopping_cart = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, r.request_date," +

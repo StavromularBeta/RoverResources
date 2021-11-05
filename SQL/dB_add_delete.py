@@ -57,7 +57,7 @@ class AddDelete(Connector):
             query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments) VALUES (?,?)'
         return self.db_connector(query, values)
 
-    def new_products_record(self, values):
+    def new_products_record(self, values, request=False):
         """Inserts new record into products table. Products table holds approved products that have been ordered
         before. Can only request a product if it exists in the products table. Users with admin credentials can approve
         requests to add new products to this table.
@@ -68,10 +68,17 @@ class AddDelete(Connector):
         values : tuple
             (category ID, sub category ID, vendors ID, product code, name, unit of issue, comments)
         """
-        query = 'INSERT OR IGNORE' \
-                ' INTO products' \
-                ' (categories_id, sub_categories_id, vendors_id, product_code, name, unit_of_issue, comments)' \
-                ' VALUES (?,?,?,?,?,?,?)'
+        if request:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO products' \
+                    ' (categories_id, sub_categories_id, vendors_id, product_code, name, unit_of_issue, comments,'\
+                    ' approved)' \
+                    ' VALUES (?,?,?,?,?,?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO products' \
+                    ' (categories_id, sub_categories_id, vendors_id, product_code, name, unit_of_issue, comments)' \
+                    ' VALUES (?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_price_tracking_record(self, values):
