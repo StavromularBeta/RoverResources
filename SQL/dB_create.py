@@ -143,7 +143,7 @@ class CreateTb(Connector):
 
     def db_table_add_approved_column(self):
         for key, value in self.table_dictionary.items():
-            query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT False"
+            query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT True"
             self.db_connector(query)
 
 
