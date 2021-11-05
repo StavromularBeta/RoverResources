@@ -10,7 +10,7 @@ class DataTransfer(Connector):
     def insert_db_one_table_one_into_db_two_table_two(self,
                                                       table_name):
         query = "ATTACH DATABASE " + self.old_database_target + " AS old_db; "
-        query += "INSERT INTO " + table_name + " SELECT * FROM old_db." + table_name + "; "
+        query += "INSERT OR REPLACE INTO " + table_name + " SELECT * FROM old_db." + table_name + "; "
         query += "DETACH old_db;"
         return self.db_connector(query)
 
