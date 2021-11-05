@@ -141,6 +141,11 @@ class CreateTb(Connector):
         if view_tables:
             self.db_views.view_database_architecture()
 
+    def db_table_add_approved_column(self):
+        for key, value in self.table_dictionary.items():
+            query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT False"
+            self.db_connector(query)
+
 
 # set up to create tables if run, and print tables to console.
 db = CreateTb()

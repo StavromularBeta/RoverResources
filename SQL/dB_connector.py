@@ -31,6 +31,7 @@ class Connector(object):
         target = cwd + r'\SQL\Database\ '
         # adds name of database to end of target
         self.database_target = target[:-1] + "RoverResourcesDatabase.db"
+        self.old_database_target = target[:-1] + "RoverResourcesDatabase2.db"
 
     def db_connector(self, query, arguments=None):
         """takes a query with optional arguments. Opens db connection. Executes query on database. Closes db connection.
