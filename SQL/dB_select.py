@@ -210,7 +210,9 @@ class Select(Connector):
                                                               condition,
                                                               order_by,
                                                               print_view=False,
-                                                              descending_order=False):
+                                                              descending_order=False,
+                                                              no_archive=False,
+                                                              no_approved=False):
         """selects all records from a table, where a particular field matches (using equals) a condition. Matches must
         be exact.
 
@@ -234,9 +236,34 @@ class Select(Connector):
             if True, query is returned from db in descending order.
         """
         if descending_order:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by + " DESC"
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False AND approved = True ORDER BY " + order_by + " DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False ORDER BY " + order_by + " DESC"
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND approved = True ORDER BY " + order_by + " DESC"
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) ORDER BY " + order_by + " DESC"
         else:
-            query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by
+            if no_archive:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False AND approved = True ORDER BY " + order_by
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                        " = (?) AND archived = False ORDER BY " + order_by
+            else:
+                if no_approved:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name +\
+                            " = (?) AND approved = True ORDER BY " + order_by
+                else:
+                    query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by
         return self.print_or_return_query(query, (condition,), print_view)
 
     def select_one_from_table_where_field_equals(self,
@@ -272,7 +299,9 @@ class Select(Connector):
                                   table_list_of_lists,
                                   order_by_field,
                                   print_view=False,
-                                  no_archive=None):
+                                  no_archive=None,
+                                  no_approved=None,
+                                  search_by=None):
         """Left joins any amount of tables.
 
         Parameters
@@ -303,6 +332,13 @@ class Select(Connector):
                 query += " LEFT JOIN " + item[0] + " ON " + table_list_of_lists[table_index-1][2] + " = " + item[1]
                 table_index += 1
         if no_archive:
-            query += " WHERE " + no_archive + " = False"
+            if no_approved:
+                query += " WHERE " + no_archive + " = False AND " + no_approved + " = True"
+                if search_by:
+                    query += " AND " + search_by[0] + " LIKE " + search_by[1]
+            else:
+                query += " WHERE " + no_archive + " = False"
+                if search_by:
+                    query += " AND " + search_by[0] + " LIKE '" + search_by[1] + "' "
         query += " ORDER BY " + order_by_field
         return self.print_or_return_query(query, False, print_view)

@@ -48,14 +48,14 @@ class ShoppingCartView(tk.Frame):
 
     # MAIN METHODS
 
-    def shopping_cart_view(self, user, product_sort_by=False):
+    def shopping_cart_view(self, user, product_sort_by=False, product_search_by=False):
         self.active_user = user
-        self.create_products_list(product_sort_by)
+        self.create_products_list(product_sort_by, product_search_by)
         self.create_shopping_cart()
 
-    def create_products_list(self, product_sort_by=False):
+    def create_products_list(self, product_sort_by=False, product_search_by=False):
         self.create_products_list_navigation_frame()
-        self.get_products_list_from_database(product_sort_by)
+        self.get_products_list_from_database(product_sort_by, product_search_by)
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
         self.create_scrollable_products_list()
@@ -85,21 +85,43 @@ class ShoppingCartView(tk.Frame):
         type_of_sort_menu.config(highlightbackground=self.formatting.colour_code_2)
         type_of_sort_menu.config(font=self.formatting.medium_step_font)
         tk.Label(self.products_list_navigation_frame,
-                 text="Sort Products",
+                 text="Sort:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
-        type_of_sort_menu.grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        type_of_sort_menu.grid(row=0, column=2, sticky=tk.W, pady=5)
         sort_by_button = tk.Button(self.products_list_navigation_frame,
-                                   text="Sort Products",
+                                   text="Sort",
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_shopping_cart_view(
                                        self.active_user,
                                        self.product_list_sort_value.get())).grid(
             row=0, column=4, sticky=tk.W, padx=10, pady=5
         )
+        tk.Label(self.products_list_navigation_frame,
+                 text="Search:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
+        product_search_entry = tk.Entry(self.products_list_navigation_frame)
+        product_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+        search_by_button = tk.Button(self.products_list_navigation_frame,
+                                     text="Search Name",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_shopping_cart_view(
+                                       self.active_user,
+                                       product_search_by=product_search_entry.get())).grid(
+            row=0, column=7, sticky=tk.W, padx=10, pady=5
+        )
+        tk.Button(self.products_list_navigation_frame,
+                  text="All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_shopping_cart_view(
+                      self.active_user)).grid(
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
+        )
 
-    def get_products_list_from_database(self, product_sort_by=None):
+    def get_products_list_from_database(self, product_sort_by=None, product_search_by=None):
         if product_sort_by:
             sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[product_sort_by]
             self.product_list_sort_value.set(product_sort_by)
@@ -111,6 +133,16 @@ class ShoppingCartView(tk.Frame):
                  ["sub_categories sc", "sc.id", ""]],
                 sort_by_variable,
                 no_archive="p.archived")
+        elif product_search_by:
+            self.products_list = self.select_db.left_join_multiple_tables(
+                "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
+                [["products p", "", "p.categories_id"],
+                 ["categories c", "c.id", "p.vendors_id"],
+                 ["vendors v", "v.id", "p.sub_categories_id"],
+                 ["sub_categories sc", "sc.id", ""]],
+                "p.name",
+                no_archive="p.archived",
+                search_by=["p.name", '%' + product_search_by + '%'])
         else:
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
@@ -404,15 +436,24 @@ class ShoppingCartView(tk.Frame):
                                                                                                  product_to_add[4],
                                                                                                  "cost_date",
                                                                                                  descending_order=True)
-        current_product_price = [item for item in current_product_price][0][0]
-        self.add_delete_db.new_requests_record((product_to_add[4],
-                                                self.active_user[0],
-                                                current_product_price,
-                                                datetime.date.today(),
-                                                amount_of_product,
-                                               ""))
-        self.parent.display_shopping_cart_view(self.active_user)
-        top_level.destroy()
+        try:
+            current_product_price = [item for item in current_product_price][0][0]
+            self.add_delete_db.new_requests_record((product_to_add[4],
+                                                   self.active_user[0],
+                                                   current_product_price,
+                                                   datetime.date.today(),
+                                                   amount_of_product,
+                                                   ""))
+            self.parent.display_shopping_cart_view(self.active_user)
+            top_level.destroy()
+        except IndexError:
+            tk.Label(top_level,
+                     text="No price set yet for product. See Admin.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5
+            )
 
     def remove_product_from_cart(self, request_to_remove):
         self.add_delete_db.delete_entries_from_table_by_field_condition("requests",
