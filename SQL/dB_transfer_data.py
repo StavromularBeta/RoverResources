@@ -13,7 +13,7 @@ class DataTransfer(Connector):
         query = "ATTACH DATABASE " + database_2_name + " AS old_db; "
         query += "INSERT INTO " + table_name + " SELECT * FROM old_db." + table_name + "; "
         query += "DETACH old_db;"
-        print(query)
+        return self.db_connector(query)
 
 
 data_transfer = DataTransfer()
