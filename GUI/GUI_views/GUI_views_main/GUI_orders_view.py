@@ -42,12 +42,12 @@ class OrdersView(tk.Frame):
                                                      "Product Name": "p.name",
                                                      "Cost per Unit": "pt.cost"}
 
-    def orders_view(self, user, sort_by=False):
+    def orders_view(self, user, sort_by=False, search_by=False):
         self.active_user = user
-        self.create_orders_view(sort_by)
+        self.create_orders_view(sort_by, search_by)
 
-    def create_orders_view(self, sort_by=False):
-        self.get_active_orders_from_database(sort_by)
+    def create_orders_view(self, sort_by=False, search_by=False):
+        self.get_active_orders_from_database(sort_by, search_by)
         self.make_scrollable_orders_header_labels()
         self.populate_scrollable_orders_list()
         self.create_scrollable_orders_view()
@@ -67,7 +67,7 @@ class OrdersView(tk.Frame):
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.E, padx=10, pady=5)
         tk.Label(self.orders_navigation_frame,
-                 text="Sort Orders",
+                 text="Sort:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
@@ -78,15 +78,37 @@ class OrdersView(tk.Frame):
         type_of_sort_menu.config(font=self.formatting.medium_step_font)
         type_of_sort_menu.grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
         sort_by_button = tk.Button(self.orders_navigation_frame,
-                                   text="Sort Orders",
+                                   text="Sort",
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_orders_view(
                                        self.active_user,
                                        self.orders_sort_value.get())).grid(
             row=0, column=4, sticky=tk.W, padx=10, pady=5
         )
+        tk.Label(self.orders_navigation_frame,
+                 text="Search:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
+        orders_search_entry = tk.Entry(self.orders_navigation_frame)
+        orders_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+        search_by_button = tk.Button(self.orders_navigation_frame,
+                                     text="Search Name",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_orders_view(
+                                       self.active_user,
+                                       search_by=orders_search_entry.get())).grid(
+            row=0, column=7, sticky=tk.W, padx=10, pady=5
+        )
+        tk.Button(self.orders_navigation_frame,
+                  text="All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_orders_view(
+                      self.active_user)).grid(
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
+        )
 
-    def get_active_orders_from_database(self, sort_by=None):
+    def get_active_orders_from_database(self, sort_by=None, search_by=None):
         if sort_by:
             sort_by_variable = self.sort_by_orders_conversion_dictionary[sort_by]
             self.orders_sort_value.set(sort_by)
@@ -102,6 +124,20 @@ class OrdersView(tk.Frame):
                                            ["priceTracking pt", "pt.id", ""]],
                                           sort_by_variable,
                                           no_archive="o.archived")
+        elif search_by:
+            self.orders = self.select_db.\
+                left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
+                                          " pt.cost, u.user_name, r.amount, o.units_ordered, o.order_date, o.id",
+                                          [["orders o", "", "o.requests_id"],
+                                           ["requests r", "r.id", "r.users_id"],
+                                           ["users u", "u.id", "r.products_id"],
+                                           ["products p", "p.id", "p.vendors_id"],
+                                           ["vendors v", "v.id", "p.categories_id"],
+                                           ["categories c", "c.id", "r.price_id"],
+                                           ["priceTracking pt", "pt.id", ""]],
+                                          "p.name",
+                                          no_archive="o.archived",
+                                          search_by=["p.name", '%' + search_by + '%'])
         else:
             self.orders = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
