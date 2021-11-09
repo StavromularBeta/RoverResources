@@ -73,10 +73,10 @@ class MainWindow(tk.Frame):
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.shopping_cart_view_admin.grid()
 
-    def display_orders_view(self, user, sort_by=False):
+    def display_orders_view(self, user, sort_by=False, search_by=False):
         self.clear_main_window()
         self.display_top_frame_select_button_view(user)
-        self.orders_view.orders_view(user, sort_by)
+        self.orders_view.orders_view(user, sort_by, search_by)
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.orders_view.grid()
 
