@@ -410,7 +410,7 @@ class ShoppingCartView(tk.Frame):
     def add_product_to_cart(self, product_to_add):
         add_product_amount_popup = tk.Toplevel()
         add_product_amount_popup.config(bg=self.formatting.colour_code_1)
-        add_product_amount_popup.geometry('400x250')
+        add_product_amount_popup.geometry('500x200')
         tk.Label(add_product_amount_popup,
                  text="Amount to Request: ",
                  font=self.formatting.medium_step_font,
@@ -438,14 +438,43 @@ class ShoppingCartView(tk.Frame):
                                                                                                  descending_order=True)
         try:
             current_product_price = [item for item in current_product_price][0][0]
-            self.add_delete_db.new_requests_record((product_to_add[4],
-                                                   self.active_user[0],
-                                                   current_product_price,
-                                                   datetime.date.today(),
-                                                   amount_of_product,
-                                                   ""))
-            self.parent.display_shopping_cart_view(self.active_user)
-            top_level.destroy()
+            active_request_for_product_check = self.select_db.select_all_from_table_where_one_field_equals(
+                "requests",
+                "products_id",
+                product_to_add[4],
+                no_archive=True
+            )
+            total_active_requested_units = 0
+            for item in active_request_for_product_check:
+                total_active_requested_units += float(item[5])
+            if total_active_requested_units > 0:
+                tk.Label(top_level,
+                         text=str(total_active_requested_units) +
+                         " Units of this product are currently requested. Continue?",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_3).grid(
+                    row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+                tk.Button(top_level,
+                          text="Confirm Request",
+                          font=self.formatting.medium_step_font,
+                          command=lambda: self.confirmed_request_entry((product_to_add[4],
+                                                                        self.active_user[0],
+                                                                        current_product_price,
+                                                                        datetime.date.today(),
+                                                                        amount_of_product,
+                                                                        ""),
+                                                                       top_level)).grid(
+                    row=3, column=0, sticky=tk.W, padx=10, pady=5)
+            else:
+                self.add_delete_db.new_requests_record((product_to_add[4],
+                                                        self.active_user[0],
+                                                        current_product_price,
+                                                        datetime.date.today(),
+                                                        amount_of_product,
+                                                        ""))
+                self.parent.display_shopping_cart_view(self.active_user)
+                top_level.destroy()
         except IndexError:
             tk.Label(top_level,
                      text="No price set yet for product. See Admin.",
@@ -454,6 +483,11 @@ class ShoppingCartView(tk.Frame):
                      fg=self.formatting.colour_code_3).grid(
                 row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5
             )
+
+    def confirmed_request_entry(self, values, top_level_window):
+        self.add_delete_db.new_requests_record(values)
+        top_level_window.destroy()
+        self.parent.display_shopping_cart_view(self.active_user)
 
     def remove_product_from_cart(self, request_to_remove):
         self.add_delete_db.delete_entries_from_table_by_field_condition("requests",

@@ -9,7 +9,8 @@ from GUI.GUI_views.GUI_views_main import GUI_shopping_cart_view_admin as sc_admi
 from GUI.GUI_views.GUI_views_main import GUI_orders_view as ord
 from GUI.GUI_views.GUI_views_main import GUI_approvals_view as apr
 from GUI.GUI_views.GUI_views_main import GUI_archives_view as arc
-
+from GUI.GUI_views.GUI_views_main import GUI_users_view as usr
+from GUI.GUI_views.GUI_views_main import GUI_received_view as rcv
 
 class MainWindow(tk.Frame):
     def __init__(self, parent, **kwargs):
@@ -23,6 +24,8 @@ class MainWindow(tk.Frame):
         self.orders_view = ord.OrdersView(self)
         self.approvals_view = apr.ApprovalsView(self)
         self.archives_view = arc.ArchivesView(self)
+        self.users_view = usr.UsersView(self)
+        self.received_view = rcv.ReceivedView(self)
 
     def clear_main_window(self):
         for widget in self.winfo_children():
@@ -36,6 +39,8 @@ class MainWindow(tk.Frame):
         self.orders_view = ord.OrdersView(self)
         self.approvals_view = apr.ApprovalsView(self)
         self.archives_view = arc.ArchivesView(self)
+        self.users_view = usr.UsersView(self)
+        self.received_view = rcv.ReceivedView(self)
 
     def display_login_view(self):
         self.clear_main_window()
@@ -44,6 +49,13 @@ class MainWindow(tk.Frame):
 
     def display_top_frame_select_button_view(self, user):
         self.top_select_view.create_top_view_buttons(user)
+
+    def display_users_view(self, user):
+        self.clear_main_window()
+        self.display_top_frame_select_button_view(user)
+        self.users_view.users_view(user)
+        self.top_select_view.grid(sticky=tk.W, padx=10)
+        self.users_view.grid(sticky=tk.W, padx=10)
 
     def display_categories_and_vendors_view(self, user, vendor_search=False):
         self.clear_main_window()
@@ -79,6 +91,13 @@ class MainWindow(tk.Frame):
         self.orders_view.orders_view(user, sort_by, search_by)
         self.top_select_view.grid(sticky=tk.W, padx=10)
         self.orders_view.grid()
+
+    def display_received_view(self, user, sort_by=False, search_by=False):
+        self.clear_main_window()
+        self.display_top_frame_select_button_view(user)
+        self.received_view.received_view(user, sort_by, search_by)
+        self.top_select_view.grid(sticky=tk.W, padx=10)
+        self.received_view.grid()
 
     def display_approvals_view(self, user, sort_by=False):
         self.clear_main_window()

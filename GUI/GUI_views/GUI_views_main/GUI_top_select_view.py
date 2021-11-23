@@ -29,6 +29,13 @@ class TopSelectView(tk.Frame):
                                    command=lambda: self.are_you_sure_logout_popup())
         log_out_button.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
         column_count += 1
+        if self.active_user[1] == 1:
+            users_button = tk.Button(self,
+                                     text="Users",
+                                     font=self.formatting.medium_step_font,
+                                     command=lambda: self.parent.display_users_view(self.active_user))
+            users_button.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         display_products_list = tk.Button(self,
                                           text="Categories & Vendors",
                                           font=self.formatting.medium_step_font,
@@ -62,6 +69,13 @@ class TopSelectView(tk.Frame):
                                 command=lambda: self.parent.display_orders_view(
                                     self.active_user))
         orders_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
+        received_view = tk.Button(self,
+                                  text="Receiving",
+                                  font=self.formatting.medium_step_font,
+                                  command=lambda: self.parent.display_received_view(
+                                      self.active_user))
+        received_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
         column_count += 1
         if self.active_user[1] == 1:
             display_all_carts = tk.Button(self,

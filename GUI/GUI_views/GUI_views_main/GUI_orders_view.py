@@ -3,6 +3,7 @@ from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_errorHandling as tk_errorHandling
 import datetime
 
 
@@ -13,6 +14,7 @@ class OrdersView(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.error_handling = tk_errorHandling.ErrorHandling()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
         self.edit_db = dB_edit.EditDb()
@@ -41,6 +43,7 @@ class OrdersView(tk.Frame):
                                                      "Order Date": "o.order_date",
                                                      "Product Name": "p.name",
                                                      "Cost per Unit": "pt.cost"}
+        self.popup_error_message = tk.Label()
 
     def orders_view(self, user, sort_by=False, search_by=False):
         self.active_user = user
@@ -285,7 +288,7 @@ class OrdersView(tk.Frame):
                      fg=text_color).grid(row=row_counter, column=10, sticky=tk.W, padx=10, pady=5)
             if self.active_user[1] == 1:
                 tk.Button(self.orders_frame,
-                          text="Receive Product",
+                          text="Receive Order",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.receive_product_popup(item[10])).grid(row=row_counter,
                                                                                            column=11,
@@ -299,21 +302,245 @@ class OrdersView(tk.Frame):
     def receive_product_popup(self, order_to_receive):
         receive_product_popup = tk.Toplevel()
         receive_product_popup.config(bg=self.formatting.colour_code_1)
-        receive_product_popup.geometry('500x90')
+        receive_product_popup.geometry('500x700')
         tk.Label(receive_product_popup,
-                 text="At this stage of development, received orders will be archived.",
+                 text="Receive Order",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=0, column=0, sticky=tk.W, pady=5, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Amount Received",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+                 fg=self.formatting.colour_code_2).grid(row=1, column=0, sticky=tk.W, padx=10)
+        amount_received_entry = tk.Entry(receive_product_popup)
+        amount_received_entry.grid(row=1, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Date (leave blank if today)",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Year",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=3, column=0, sticky=tk.W, padx=10)
+        year_entry = tk.Entry(receive_product_popup)
+        year_entry.grid(row=3, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Month",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=4, column=0, sticky=tk.W, padx=10)
+        month_entry = tk.Entry(receive_product_popup)
+        month_entry.grid(row=4, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Day",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=5, column=0, sticky=tk.W, padx=10)
+        day_entry = tk.Entry(receive_product_popup)
+        day_entry.grid(row=5, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Receiving Information (Optional)",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Lot Number",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=7, column=0, sticky=tk.W, padx=10)
+        lot_number_entry = tk.Entry(receive_product_popup)
+        lot_number_entry.grid(row=7, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Serial Number",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=8, column=0, sticky=tk.W, padx=10)
+        serial_entry = tk.Entry(receive_product_popup)
+        serial_entry.grid(row=8, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Model",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=9, column=0, sticky=tk.W, padx=10)
+        model_entry = tk.Entry(receive_product_popup)
+        model_entry.grid(row=9, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Product Expiry Date",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=10, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Year",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=11, column=0, sticky=tk.W, padx=10)
+        expiry_year_entry = tk.Entry(receive_product_popup)
+        expiry_year_entry.grid(row=11, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Month",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=12, column=0, sticky=tk.W, padx=10)
+        expiry_month_entry = tk.Entry(receive_product_popup)
+        expiry_month_entry.grid(row=12, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Day",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=13, column=0, sticky=tk.W, padx=10)
+        expiry_day_entry = tk.Entry(receive_product_popup)
+        expiry_day_entry.grid(row=13, column=1, sticky=tk.W, padx=10)
+        tk.Label(receive_product_popup,
+                 text="Comments",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=14, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        received_notes = tk.Text(receive_product_popup,
+                                 height=5,
+                                 width=40)
+        received_notes.config(bg=self.formatting.colour_code_2)
+        received_notes.config(state=tk.NORMAL)
+        received_notes.grid(row=15, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
+        tk.Button(receive_product_popup,
+                  text="Partially Receive Order",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.receive_order_and_reload_orders_page(order_to_receive,
+                                                                            receive_product_popup,
+                                                                            (year_entry.get(),
+                                                                             month_entry.get(),
+                                                                             day_entry.get(),
+                                                                             expiry_year_entry.get(),
+                                                                             expiry_month_entry.get(),
+                                                                             expiry_day_entry.get(),
+                                                                             amount_received_entry.get(),
+                                                                             lot_number_entry.get(),
+                                                                             serial_entry.get(),
+                                                                             model_entry.get(),
+                                                                             received_notes.get("1.0", tk.END),
+                                                                             ),
+                                                                            partial=True)).grid(
+            row=16,
+            column=0,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
         tk.Button(receive_product_popup,
                   text="Receive Order",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.archive_order_and_reload_orders_page(order_to_receive,
-                                                                            receive_product_popup)).grid(row=1,
-                                                                                                         column=0,
-                                                                                                         sticky=tk.W,
-                                                                                                         padx=10,
-                                                                                                         pady=5)
+                  command=lambda: self.receive_order_and_reload_orders_page(order_to_receive,
+                                                                            receive_product_popup,
+                                                                            (year_entry.get(),
+                                                                             month_entry.get(),
+                                                                             day_entry.get(),
+                                                                             expiry_year_entry.get(),
+                                                                             expiry_month_entry.get(),
+                                                                             expiry_day_entry.get(),
+                                                                             amount_received_entry.get(),
+                                                                             lot_number_entry.get(),
+                                                                             serial_entry.get(),
+                                                                             model_entry.get(),
+                                                                             received_notes.get("1.0", tk.END),
+                                                                             ))).grid(
+            row=16,
+            column=1,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
+
+    def receive_order_and_reload_orders_page(self,
+                                             order_to_receive,
+                                             receive_product_popup,
+                                             values,
+                                             partial=None):
+        received_date_check = True
+        self.popup_error_message = tk.Label()
+        if len(values[0]) == 0 and len(values[1]) == 0 and len(values[2]) == 0:
+            # blank date = received today
+            received_date = datetime.date.today()
+        else:
+            # date not blank, need to check
+            received_date_check = self.error_handling.checkYearMonthDayFormat(values[0], values[1], values[2])
+            if received_date_check:
+                # receive date check passed
+                received_date = datetime.date(int(values[0]), int(values[1]), int(values[2]))
+            else:
+                # receive date fail label
+                self.popup_error_message.destroy()
+                self.popup_error_message = tk.Label(receive_product_popup,
+                                                    text=
+                                                    "Error (blank received amt, invalid received amt, invalid date)",
+                                                    font=self.formatting.medium_step_font,
+                                                    bg=self.formatting.colour_code_1,
+                                                    fg=self.formatting.colour_code_3).grid(
+                    row=17, column=0, columnspan=4, sticky=tk.W, pady=5, padx=10)
+        expiry_date_check = True
+        if len(values[3]) == 0 and len(values[4]) == 0 and len(values[5]) == 0:
+            try:
+                expiry_date = datetime.date(int(values[0]), int(values[1]), int(values[2]))
+            except ValueError:
+                expiry_date = datetime.date.today()
+        else:
+            expiry_date_check = self.error_handling.checkYearMonthDayFormat(values[3],
+                                                                            values[4],
+                                                                            values[5],
+                                                                            expiry=True)
+            if expiry_date_check:
+                expiry_date = datetime.date(int(values[3]), int(values[4]), int(values[5]))
+            else:
+                # expiry date fail label.
+                self.popup_error_message.destroy()
+                self.popup_error_message = tk.Label(receive_product_popup,
+                                                    text=
+                                                    "Error (blank received amt, invalid received amt, invalid date)",
+                                                    font=self.formatting.medium_step_font,
+                                                    bg=self.formatting.colour_code_1,
+                                                    fg=self.formatting.colour_code_3).grid(
+                    row=17, column=0, columnspan=4, sticky=tk.W, pady=5, padx=10)
+        invalid_receive_amount_check = True
+        invalid_receive_amount_check = self.error_handling.checkBlankEntry(values[6])
+        if invalid_receive_amount_check:
+            try:
+                int(values[6])
+            except ValueError:
+                invalid_receive_amount_check = False
+                self.popup_error_message.destroy()
+                self.popup_error_message = tk.Label(receive_product_popup,
+                                                    text=
+                                                    "Error (blank received amt, invalid received amt, invalid date)",
+                                                    font=self.formatting.medium_step_font,
+                                                    bg=self.formatting.colour_code_1,
+                                                    fg=self.formatting.colour_code_3).grid(
+                    row=17, column=0, columnspan=4, sticky=tk.W, pady=5, padx=10)
+        else:
+            # blank received fail label
+            self.popup_error_message.destroy()
+            self.popup_error_message = tk.Label(receive_product_popup,
+                                                text="Error (blank received amt, invalid received amt, invalid date)",
+                                                font=self.formatting.medium_step_font,
+                                                bg=self.formatting.colour_code_1,
+                                                fg=self.formatting.colour_code_3).grid(
+                     row=17, column=0, columnspan=4, sticky=tk.W, pady=5, padx=10)
+        if received_date_check and expiry_date_check and invalid_receive_amount_check:
+            # new received entry
+            self.add_delete_db.new_received_record(
+                (order_to_receive,
+                 received_date,
+                 values[6],
+                 values[7],
+                 expiry_date,
+                 "",
+                 values[9],
+                 values[8],
+                 values[10])
+            )
+            if not partial:
+                # archive order
+                self.edit_db.archive_entry_in_table_by_id("orders", order_to_receive)
+            receive_product_popup.destroy()
+            self.parent.display_orders_view(self.active_user)
 
     def archive_order_and_reload_orders_page(self,
                                              order_to_receive,

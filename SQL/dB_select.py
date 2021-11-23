@@ -300,7 +300,9 @@ class Select(Connector):
                                   order_by_field,
                                   print_view=False,
                                   no_archive=None,
+                                  only_archive=None,
                                   no_approved=None,
+                                  only_approved=None,
                                   search_by=None):
         """Left joins any amount of tables.
 
@@ -322,6 +324,26 @@ class Select(Connector):
         print_view : bool
             True if you want to print query result to console. If selected, method returns nothing. Otherwise,
             returns query.
+
+        no_archive : str
+            the table reference to the archive field. if true, sets archive for main table to False, hides archived
+            records.
+
+        only_archive : str
+            the table reference to the archive field. if true, sets archive for main table to True, gets only archived
+            records.
+
+        no_approved : str
+            needs a better name. the table reference to the approved field. If true, sets approved for main table to
+            False, which hides unapproved records.
+
+        only_approved : str
+            the table reference to the approved field. If true, sets approved for main table to True, which hides
+            approved records.
+
+        search_by : list
+            first index is name of the field to search by, second record is string to search for. Does a match by using
+            regex percentage tokens at start and end of string, plus use of LIKE term.
         """
         table_index = 0
         query = "SELECT " + fields_to_select_string + " FROM " + table_list_of_lists[0][0]
@@ -331,14 +353,30 @@ class Select(Connector):
             else:
                 query += " LEFT JOIN " + item[0] + " ON " + table_list_of_lists[table_index-1][2] + " = " + item[1]
                 table_index += 1
+        if no_archive or no_approved or search_by or only_approved or only_archive:
+            query += " WHERE "
+        # could probably make this much tighter using only elif statements.
         if no_archive:
+            query += no_archive + " = False "
             if no_approved:
-                query += " WHERE " + no_archive + " = False AND " + no_approved + " = True"
+                query += "AND " + no_approved + " = True "
+            elif only_approved:
+                query += "AND " + only_approved + " = False "
+            if search_by:
+                query += " AND " + search_by[0] + " LIKE '" + search_by[1] + "'"
+        elif only_archive:
+            query += only_archive + " = True "
+        else:
+            if no_approved:
+                query += no_approved + " = True "
                 if search_by:
-                    query += " AND " + search_by[0] + " LIKE " + search_by[1]
+                    query += " AND " + search_by[0] + " LIKE '" + search_by[1] + "'"
+            elif only_approved:
+                query += only_approved + " = False "
+                if search_by:
+                    query += " AND " + search_by[0] + " LIKE '" + search_by[1] + "'"
             else:
-                query += " WHERE " + no_archive + " = False"
                 if search_by:
-                    query += " AND " + search_by[0] + " LIKE '" + search_by[1] + "' "
+                    query += search_by[0] + " LIKE '" + search_by[1] + "'"
         query += " ORDER BY " + order_by_field
         return self.print_or_return_query(query, False, print_view)
