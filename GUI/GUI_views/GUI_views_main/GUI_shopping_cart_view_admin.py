@@ -283,11 +283,11 @@ class ShoppingCartViewAdmin(tk.Frame):
             tk.Button(self.shopping_cart_frame,
                       text="Order",
                       font=self.formatting.medium_step_font,
-                      command=lambda item=item: self.order_product_popup(item[9])).grid(row=row_counter,
-                                                                                        column=11,
-                                                                                        sticky=tk.W,
-                                                                                        padx=10,
-                                                                                        pady=5)
+                      command=lambda item=item: self.order_product_popup(item[9], item[0])).grid(row=row_counter,
+                                                                                                 column=11,
+                                                                                                 sticky=tk.W,
+                                                                                                 padx=10,
+                                                                                                 pady=5)
             row_counter += 1
             even_odd += 1
             self.admin_shopping_cart_canvas_length += 50
@@ -318,10 +318,10 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                                         request_to_remove)
         self.parent.display_admin_shopping_cart_view(self.active_user)
 
-    def order_product_popup(self, request_to_order):
+    def order_product_popup(self, request_to_order, product_to_order):
         order_product_popup = tk.Toplevel()
         order_product_popup.config(bg=self.formatting.colour_code_1)
-        order_product_popup.geometry('400x350')
+        order_product_popup.geometry('550x450')
         units_ordered_entry = tk.Entry(order_product_popup)
         tk.Label(order_product_popup,
                  text="Units Ordered: ",
@@ -349,7 +349,8 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                                                     units_ordered_entry.get(),
                                                                                     order_comments_textbox.get("1.0",
                                                                                                                tk.END),
-                                                                                    order_product_popup)).grid(
+                                                                                    order_product_popup,
+                                                                                    product_to_order)).grid(
             row=3, column=0, sticky=tk.W, padx=10, pady=5
         )
 
@@ -358,12 +359,46 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                      order_date,
                                                      units_ordered,
                                                      comments,
-                                                     order_popup):
-        self.add_delete_db.new_orders_record((requests_id,
-                                              order_date,
-                                              units_ordered,
-                                              comments))
-        self.edit_db.archive_entry_in_table_by_id("requests",
-                                                  requests_id)
-        order_popup.destroy()
-        self.parent.display_admin_shopping_cart_view(self.active_user)
+                                                     order_popup,
+                                                     product_to_order,
+                                                     confirmed=False):
+        active_orders_check = self.select_db.left_join_multiple_tables(
+            "o.id, p.name, o.units_ordered",
+            [["orders o", "", "o.requests_id"],
+             ["requests r", "r.id", "r.products_id"],
+             ["products p", "p.id", ""]],
+            "p.name",
+            search_by=["p.name", '%' + product_to_order + '%'],
+            no_archive="o.archived"
+        )
+        active_ordered_units = 0
+        for item in active_orders_check:
+            active_ordered_units += int(item[2])
+        if active_ordered_units > 0 and not confirmed:
+            tk.Label(order_popup,
+                     text="There are " + str(active_ordered_units) +
+                          " unit(s) of this product currently ordered. Continue?",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=4, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+            tk.Button(order_popup,
+                      text="Confirm Order",
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.order_request_and_reload_admin_shopping_cart(requests_id,
+                                                                                        order_date,
+                                                                                        units_ordered,
+                                                                                        comments,
+                                                                                        order_popup,
+                                                                                        product_to_order,
+                                                                                        confirmed=True)).grid(
+                row=5, column=0, sticky=tk.W, padx=10, pady=5)
+        else:
+            self.add_delete_db.new_orders_record((requests_id,
+                                                 order_date,
+                                                 units_ordered,
+                                                 comments))
+            self.edit_db.archive_entry_in_table_by_id("requests",
+                                                      requests_id)
+            order_popup.destroy()
+            self.parent.display_admin_shopping_cart_view(self.active_user)

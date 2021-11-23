@@ -6,7 +6,7 @@ class ErrorHandling:
     def __init__(self):
         pass
 
-    def checkYearMonthDayFormat(self, year_to_check, month_to_check, day_to_check):
+    def checkYearMonthDayFormat(self, year_to_check, month_to_check, day_to_check, expiry=False):
         test_pass = True
         # checks to see if year, month, date can be converted to ints
         try:
@@ -36,8 +36,11 @@ class ErrorHandling:
         if 1980 <= int(year_to_check) <= int(datetime.date.today().year):
             pass
         else:
-            test_pass = False
-            return test_pass
+            if expiry:
+                pass
+            else:
+                test_pass = False
+                return test_pass
         if 1 <= int(month_to_check) <= 12:
             pass
         else:

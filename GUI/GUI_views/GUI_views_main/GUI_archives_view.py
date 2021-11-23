@@ -30,12 +30,8 @@ class ArchivesView(tk.Frame):
                                       "Vendors",
                                       "Products",
                                       "Prices",
-                                      "Credentials",
                                       "Users",
-                                      "Requests",
-                                      "Orders",
-                                      "Received",
-                                      "Inventory"]
+                                      "Orders"]
         self.archives_sort_value = tk.StringVar(self)
         self.archives_sort_value.set("Categories")
         self.archives_table_select_conversion_dictionary = {"Categories": "categories",
@@ -43,12 +39,8 @@ class ArchivesView(tk.Frame):
                                                             "Vendors": "vendors",
                                                             "Products": "products",
                                                             "Prices": "priceTracking",
-                                                            "Credentials": "credentials",
                                                             "Users": "users",
-                                                            "Requests": "requests",
-                                                            "Orders": "orders",
-                                                            "Received": "received",
-                                                            "Inventory": "inventory"}
+                                                            "Orders": "orders"}
 
     def archives_view(self, user, sort_by=False):
         self.active_user = user
@@ -65,7 +57,7 @@ class ArchivesView(tk.Frame):
 
     def create_approvals_navigation_frame(self):
         tk.Label(self.archives_navigation_frame,
-                 text="Select Table",
+                 text="Select Archived Records",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -87,10 +79,58 @@ class ArchivesView(tk.Frame):
     def get_archives_from_table(self, sort_by=None):
         if sort_by:
             sort_by_variable = self.archives_table_select_conversion_dictionary[sort_by]
+            print(sort_by_variable)
             self.current_table = sort_by_variable
             self.archives_sort_value.set(sort_by)
-            self.archives = self.select_db.\
-                select_all_from_table_where_one_field_equals(sort_by_variable, "archived", "1")
+            if self.current_table == "sub_categories":
+                self.archives = self.select_db.left_join_multiple_tables(
+                    "sc.id, c.category_name, sc.sub_category_name",
+                    [["sub_categories sc", "", "sc.categories_id"],
+                     ["categories c", "c.id", ""]],
+                    "sc.sub_category_name",
+                    only_archive="sc.archived"
+                )
+            elif self.current_table == "products":
+                self.archives = self.select_db.left_join_multiple_tables(
+                    "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
+                    " p.categories_id, p.sub_categories_id, p.unit_of_issue, p.approved",
+                    [["products p", "", "p.categories_id"],
+                     ["categories c", "c.id", "p.vendors_id"],
+                     ["vendors v", "v.id", "p.sub_categories_id"],
+                     ["sub_categories sc", "sc.id", '']],
+                    "p.name",
+                    only_archive="p.archived")
+            elif self.current_table == "priceTracking":
+                self.archives = self.select_db.left_join_multiple_tables(
+                    "pt.id, p.name, pt.cost, pt.cost_date",
+                    [["priceTracking pt", "", "pt.products_id"],
+                     ["products p", "p.id", ""]],
+                    "p.name",
+                    only_archive="pt.archived")
+            elif self.current_table == "orders":
+                self.archives = self.select_db.\
+                    left_join_multiple_tables("o.id, p.name, p.product_code, v.vendor_name, c.category_name," +
+                                              "p.unit_of_issue, pt.cost, u.user_name, r.amount, o.units_ordered, " +
+                                              "o.order_date",
+                                              [["orders o", "", "o.requests_id"],
+                                               ["requests r", "r.id", "r.users_id"],
+                                               ["users u", "u.id", "r.products_id"],
+                                               ["products p", "p.id", "p.vendors_id"],
+                                               ["vendors v", "v.id", "p.categories_id"],
+                                               ["categories c", "c.id", "r.price_id"],
+                                               ["priceTracking pt", "pt.id", ""]],
+                                              "o.order_date",
+                                              only_archive="o.archived")
+            elif self.current_table == "users":
+                self.archives = self.select_db.left_join_multiple_tables(
+                    "u.id, u.user_name, cr.credential_level",
+                    [["users u", "", "u.credentials_id"],
+                     ["credentials cr", "cr.id", ""]],
+                    "u.user_name",
+                    only_archive="u.archived")
+            else:
+                self.archives = self.select_db.\
+                    select_all_from_table_where_one_field_equals(sort_by_variable, "archived", "1")
         else:
             self.current_table = "categories"
             self.archives = self.select_db.\
@@ -117,43 +157,326 @@ class ArchivesView(tk.Frame):
                                     anchor="nw")
 
     def make_scrollable_archives_header_labels(self):
-        tk.Label(self.archives_frame,
-                 text="Archived " + self.archives_sort_value.get() + " Records (Integer fields hidden for readability)",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        if self.current_table == "categories":
+            tk.Label(self.archives_frame,
+                     text="Category Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "sub_categories":
+            tk.Label(self.archives_frame,
+                     text="Category Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Sub-Category Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "vendors":
+            tk.Label(self.archives_frame,
+                     text="Vendor Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "products":
+            tk.Label(self.archives_frame,
+                     text="Product Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Catalog Number",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Vendor",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Category",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Sub-Category",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=4, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "priceTracking":
+            tk.Label(self.archives_frame,
+                     text="Product Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Price ($)",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Date of Price",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "orders":
+            tk.Label(self.archives_frame,
+                     text="Product Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Catalog Number",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Vendor",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=2, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Category",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=3, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Unit of Issue",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=4, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Cost per Unit",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=5, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Requested By",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=6, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="# Req.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=7, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="# Ord.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=8, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Order Date",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=9, sticky=tk.W, padx=10, pady=5)
+        elif self.current_table == "users":
+            tk.Label(self.archives_frame,
+                     text="User Name",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+            tk.Label(self.archives_frame,
+                     text="Credentials",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+        else:
+            tk.Label(self.archives_frame,
+                     text="Archived " + self.archives_sort_value.get() +
+                          " (Integer fields hidden for readability)",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
     def populate_scrollable_archives_list(self):
         row_counter = 1
         even_odd = 1
         for item in self.archives:
+            print(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
-            non_integer_fields = []
-            for subitem in item:
-                try:
-                    int(subitem)
-                except ValueError:
-                    non_integer_fields.append(subitem)
+            approve_column_location_from_row_create =\
+                self.populate_scrollable_list_by_table(row_counter, text_color, item)
+            tk.Button(self.archives_frame,
+                      text="Restore",
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.restore_record_and_reload_archives(item)).grid(
+                row=row_counter,
+                column=approve_column_location_from_row_create,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            self.archives_canvas_length += 50
+            row_counter += 1
+            even_odd += 1
+
+    def populate_scrollable_list_by_table(self, row_counter, text_color, record):
+        approve_button_column = 0
+        if self.current_table in ["categories", "vendors"]:
             tk.Label(self.archives_frame,
-                     text=non_integer_fields,
+                     text=record[1],
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color,
                      wraplength=0).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
-            tk.Button(self.archives_frame,
-                      text="Restore",
-                      font=self.formatting.medium_step_font,
-                      command=lambda: self.restore_record_and_reload_archives(item)).grid(row=row_counter,
-                                                                                          column=1,
-                                                                                          sticky=tk.W,
-                                                                                          padx=10,
-                                                                                          pady=5)
-            self.archives_canvas_length += 50
-            row_counter += 1
-            even_odd += 1
+            approve_button_column += 1
+        elif self.current_table in ["sub_categories", "users"]:
+            tk.Label(self.archives_frame,
+                     text=record[1],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[2],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+        elif self.current_table == "products":
+            tk.Label(self.archives_frame,
+                     text=record[1],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[2],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[3],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=2, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[4],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=3, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            if record[5] == "None":
+                tk.Label(self.archives_frame,
+                         text="",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=text_color,
+                         wraplength=0).grid(row=row_counter, column=4, sticky=tk.W, padx=10, pady=5)
+            else:
+                tk.Label(self.archives_frame,
+                         text=record[5],
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=text_color,
+                         wraplength=0).grid(row=row_counter, column=4, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+        elif self.current_table == "priceTracking":
+            tk.Label(self.archives_frame,
+                     text=record[1],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text="{:.2f}".format(float(record[2])),
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[3],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=2, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+        elif self.current_table == "orders":
+            tk.Label(self.archives_frame,
+                     text=record[1],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[2],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[3],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=2, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[4],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=3, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[5],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=4, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text="{:.2f}".format(float(record[6])),
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=5, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[7],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=6, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[8],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=7, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[9],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=8, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+            tk.Label(self.archives_frame,
+                     text=record[10],
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color).grid(row=row_counter, column=9, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+        else:
+            tk.Label(self.archives_frame,
+                     text=record,
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=text_color,
+                     wraplength=0).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            approve_button_column += 1
+        return approve_button_column
 
     def restore_record_and_reload_archives(self, record_to_restore):
         self.edit_db.edit_one_record_one_field_one_table(self.current_table, "archived", "0", record_to_restore[0])

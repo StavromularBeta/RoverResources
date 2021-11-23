@@ -525,10 +525,12 @@ class ProductListView(tk.Frame):
         individual_product_popup = tk.Toplevel()
         product_frame = tk.Frame(individual_product_popup)
         pricing_frame = tk.Frame(individual_product_popup)
+        order_history_frame = tk.Frame(individual_product_popup)
         individual_product_popup.config(bg=self.formatting.colour_code_1)
         product_frame.config(bg=self.formatting.colour_code_1)
         pricing_frame.config(bg=self.formatting.colour_code_3)
-        individual_product_popup.geometry('820x650')
+        order_history_frame.config(bg=self.formatting.colour_code_1)
+        individual_product_popup.geometry('1250x600')
         product_pricing_list = self.select_db.select_all_from_table_where_one_field_equals_order_by(
             "priceTracking",
             "products_id",
@@ -668,7 +670,7 @@ class ProductListView(tk.Frame):
                                         height=25,
                                         width=50)
         price_history_textbox.config(state=tk.NORMAL)
-        price_history_textbox.insert(tk.END, "Price     | Date \n")
+        price_history_textbox.insert(tk.END, "Price        | Date \n")
         price_history_textbox.insert(tk.END, "------------------------------\n")
         for item in product_pricing_list[1:]:
             price_history_textbox.insert(tk.END, ("{:.2f}".format(item[2]) + " "*(10-len(str(item[2]))) + "| " +
@@ -676,8 +678,127 @@ class ProductListView(tk.Frame):
                                                   "\n"))
         price_history_textbox.config(state=tk.DISABLED, wrap="word")
         price_history_textbox.grid(row=3, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        # ORDER HISTORY WIDGETS
+        tk.Label(order_history_frame,
+                 text="Product Order History",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(
+            row=0,
+            column=0,
+            columnspan=3,
+            sticky=tk.W,
+            padx=10,
+            pady=5
+        )
+        product_order_history = self.select_db.left_join_multiple_tables(
+            "o.id, o.order_date, o.units_ordered",
+            [["orders o", "", "o.requests_id"],
+             ["requests r", "r.id", "r.products_id"],
+             ["products p", "p.id", ""]],
+            "o.order_date DESC",
+            search_by=["p.id", '%' + str(product[0]) + '%']
+        )
+        order_history_list = []
+        date_differences = []
+        order_amounts = []
+        last_order = None
+        row_counter = 1
+        for item in product_order_history:
+            order_history_list.append(item)
+            if last_order:
+                current_order = datetime.date(int(item[1].split("-")[0]),
+                                              int(item[1].split("-")[1]),
+                                              int(item[1].split("-")[2]))
+                difference = last_order - current_order
+                last_order = current_order
+                date_differences.append(difference)
+            else:
+                last_order = datetime.date(int(item[1].split("-")[0]),
+                                           int(item[1].split("-")[1]),
+                                           int(item[1].split("-")[2]))
+            order_amounts.append(int(item[2]))
+        if len(date_differences) > 0:
+            average_timedelta = sum(date_differences, datetime.timedelta(0)) / len(date_differences)
+            tk.Label(order_history_frame,
+                     text="Average time between orders:",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+            tk.Label(order_history_frame,
+                     text=str(average_timedelta) + " hours.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10)
+            row_counter += 1
+        if len(order_amounts) > 0:
+            average_order_amount = sum(order_amounts) / len(order_amounts)
+            tk.Label(order_history_frame,
+                     text="Average order amount:",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+            tk.Label(order_history_frame,
+                     text="{:.1f}".format(float(average_order_amount)) + " units.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10)
+            row_counter += 1
+        else:
+            tk.Label(order_history_frame,
+                     text="No Orders Placed for this product.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+        if len(order_amounts) > 0:
+            order_history_textbox = tk.Text(order_history_frame,
+                                            height=23,
+                                            width=45)
+            order_history_textbox.config(state=tk.NORMAL)
+            order_history_textbox.insert(tk.END, " Amount Ordered  | Date \n")
+            order_history_textbox.insert(tk.END, "------------------------------\n")
+            for item in order_history_list:
+                order_history_textbox.insert(tk.END, (" " + str(item[2]) + " "*(16-len(str(item[2]))) + "| " +
+                                             str(item[1]) +
+                                             "\n"))
+            order_history_textbox.config(state=tk.DISABLED, wrap="word")
+            order_history_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+            row_counter += 1
+        # FINAL GRIDS
         product_frame.grid(row=0, column=0, sticky=tk.NW, padx=10, pady=10)
         pricing_frame.grid(row=0, column=1, sticky=tk.NW, padx=10, pady=10)
+        order_history_frame.grid(row=0, column=2, sticky=tk.NW, padx=10, pady=10)
 
     # INDIVIDUAL PRODUCT SUB-POPUPS
 

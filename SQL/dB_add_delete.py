@@ -164,7 +164,7 @@ class AddDelete(Connector):
         query = 'INSERT OR IGNORE' \
                 ' INTO received' \
                 ' (orders_id, received_date, received_amount, lot_number, expiry_date, storage_location, ' \
-                'model, equipment_SIN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
+                'model, equipment_SN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_active_inventory_record(self, values):

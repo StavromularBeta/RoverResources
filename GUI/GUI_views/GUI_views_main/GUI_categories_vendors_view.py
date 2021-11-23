@@ -133,14 +133,13 @@ class CategoriesVendorsView(tk.Frame):
             self.vendors_list = self.select_db.select_all_from_table_where_one_field_like("vendors",
                                                                                           "vendor_name",
                                                                                           '%' + vendor_search + '%',
-                                                                                          no_archive=True,
-                                                                                          no_approved=True)
+                                                                                          no_archive=True)
         else:
-            self.vendors_list = self.select_db.select_all_from_table("vendors", no_archived=True, no_approved=True)
+            self.vendors_list = self.select_db.select_all_from_table("vendors", no_archived=True)
 
     def create_scrollable_vendors_list(self):
         products_list_canvas = tk.Canvas(self.vendors_list_scrollable_container,
-                                         width=500,
+                                         width=600,
                                          height=500,
                                          scrollregion=(0, 0, 0, self.vendors_canvas_length),
                                          bd=0,
@@ -161,6 +160,17 @@ class CategoriesVendorsView(tk.Frame):
     def populate_scrollable_vendors_list(self):
         row_counter = 0
         even_odd = 1
+        tk.Label(self.vendors_list_frame,
+                 text="Vendor Name",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+        tk.Label(self.vendors_list_frame,
+                 text="Approved?",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+        row_counter += 1
         for item in self.vendors_list:
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
@@ -169,34 +179,53 @@ class CategoriesVendorsView(tk.Frame):
             vendor_name_label = self.formatting.create_shopping_cart_labels(self.vendors_list_frame,
                                                                             item[1],
                                                                             text_color)
-            self.formatting.grid_shopping_cart_labels(vendor_name_label, row_counter, 1)
+            self.formatting.grid_shopping_cart_labels(vendor_name_label, row_counter, 0)
+            if item[4] == 1:
+                tk.Label(self.vendors_list_frame,
+                         text="Yes",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_green).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            else:
+                tk.Label(self.vendors_list_frame,
+                         text="No",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_red).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
             if self.active_user[1] == 1:
                 tk.Button(self.vendors_list_frame,
                           text="Open",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.vendor_or_category_popup(
-                            "vendors",
-                            item
-                          )).grid(row=row_counter,
-                                  column=2,
-                                  sticky=tk.W,
-                                  padx=10,
-                                  pady=5)
+                          command=lambda item=item: self.updated_vendor_popup(item)).grid(
+                    row=row_counter,
+                    column=2,
+                    sticky=tk.W,
+                    padx=10,
+                    pady=5)
                 tk.Button(self.vendors_list_frame,
                           text="Archive",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.archive_vendor_popup(item,
                                                                               "vendors")).grid(row=row_counter,
-                                                                                               column=8,
+                                                                                               column=3,
                                                                                                sticky=tk.W,
                                                                                                padx=10,
                                                                                                pady=5)
+                if item[4] == 0:
+                    tk.Button(self.vendors_list_frame,
+                              text="Approve",
+                              font=self.formatting.medium_step_font,
+                              command=lambda item=item: self.approve_vendor_request_and_reload_page(item)).grid(
+                        row=row_counter,
+                        column=4,
+                        sticky=tk.W,
+                        padx=10,
+                        pady=5)
             else:
                 tk.Button(self.vendors_list_frame,
                           text="View Notes",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.vendor_or_category_popup("vendors",
-                                                                                  item)).grid(row=row_counter,
+                          command=lambda item=item: self.updated_vendor_popup(item)).grid(row=row_counter,
                                                                                               column=2,
                                                                                               sticky=tk.W,
                                                                                               padx=10,
@@ -208,11 +237,22 @@ class CategoriesVendorsView(tk.Frame):
 # SHOPPING CART METHODS
 
     def get_categories_list_from_database(self):
-        self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True, no_approved=True)
+        self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True)
 
     def populate_scrollable_categories_list(self):
         row_counter = 0
         even_odd = 1
+        tk.Label(self.categories_list_frame,
+                 text="Category Name",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+        tk.Label(self.categories_list_frame,
+                 text="Approved?",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+        row_counter += 1
         for item in self.categories_list:
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
@@ -222,7 +262,19 @@ class CategoriesVendorsView(tk.Frame):
                      text=item[1],
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
-                     fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+                     fg=text_color).grid(row=row_counter, column=0, sticky=tk.W, padx=10, pady=5)
+            if item[4] == 1:
+                tk.Label(self.categories_list_frame,
+                         text="Yes",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_green).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+            else:
+                tk.Label(self.categories_list_frame,
+                         text="No",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_red).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
             tk.Button(self.categories_list_frame,
                       text="Open",
                       font=self.formatting.medium_step_font,
@@ -240,17 +292,27 @@ class CategoriesVendorsView(tk.Frame):
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.archive_vendor_popup(item,
                                                                               "categories")).grid(row=row_counter,
-                                                                                                  column=8,
+                                                                                                  column=3,
                                                                                                   sticky=tk.W,
                                                                                                   padx=10,
                                                                                                   pady=5)
+                if item[4] == 0:
+                    tk.Button(self.categories_list_frame,
+                              text="Approve",
+                              font=self.formatting.medium_step_font,
+                              command=lambda item=item: self.approve_category_request_and_reload_page(item)).grid(
+                        row=row_counter,
+                        column=4,
+                        sticky=tk.W,
+                        padx=10,
+                        pady=5)
             self.categories_canvas_length += 50
             row_counter += 1
             even_odd += 1
 
     def create_scrollable_categories_list(self):
         shopping_cart_canvas = tk.Canvas(self.categories_list_scrollable_container,
-                                         width=500,
+                                         width=600,
                                          height=500,
                                          scrollregion=(0, 0, 0, self.categories_canvas_length),
                                          bd=0,
@@ -267,6 +329,226 @@ class CategoriesVendorsView(tk.Frame):
         shopping_cart_canvas.create_window((0, 0),
                                            window=self.categories_list_frame,
                                            anchor="nw")
+
+    def updated_vendor_popup(self, vendor):
+        vendor_popup = tk.Toplevel()
+        vendor_popup.config(bg=self.formatting.colour_code_1)
+        vendor_popup.geometry('1400x500')
+        vendor_information_frame = tk.Frame(vendor_popup)
+        vendor_product_frame = tk.Frame(vendor_popup)
+        vendor_order_frame = tk.Frame(vendor_popup)
+        vendor_information_frame.config(bg=self.formatting.colour_code_1)
+        vendor_product_frame.config(bg=self.formatting.colour_code_3)
+        vendor_order_frame.config(bg=self.formatting.colour_code_1)
+        # INFORMATION FRAME WIDGETS
+        tk.Label(vendor_information_frame,
+                 text="Vendor Information",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        tk.Label(vendor_information_frame,
+                 text="Name:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
+        tk.Label(vendor_information_frame,
+                 text=vendor[1],
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=1, column=1, sticky=tk.W, padx=10, pady=5)
+        if self.active_user[1] == 1:
+            tk.Button(vendor_information_frame,
+                      text="Edit",
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.edit_name_popup("vendors", vendor, vendor_popup)
+                      ).grid(row=1, column=2, sticky=tk.W, padx=10, pady=5)
+        vendor_notes = tk.Text(vendor_information_frame,
+                               height=5,
+                               width=40)
+        vendor_notes.config(bg=self.formatting.colour_code_2)
+        vendor_notes.insert(tk.END, vendor[2])
+        vendor_notes.config(state=tk.DISABLED, wrap="word")
+        vendor_notes.grid(row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=10)
+        if self.active_user[1] == 1:
+            tk.Button(vendor_information_frame,
+                      text="Edit Notes",
+                      font=self.formatting.medium_step_font,
+                      command=lambda: self.edit_notes_popup("vendors",
+                                                            vendor,
+                                                            vendor_popup)
+                      ).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
+        # VENDOR PRODUCT FRAME WIDGETS
+        tk.Label(vendor_product_frame,
+                 text="Active Products",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_3,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        product_order_history = self.select_db.left_join_multiple_tables(
+            "p.id, p.name, p.product_code, p.unit_of_issue",
+            [["products p", "", "p.vendors_id"],
+             ["vendors v", "v.id", ""]],
+            "p.name",
+            search_by=["v.id", '%' + str(vendor[0]) + '%']
+            )
+        product_order_history_list = [x for x in product_order_history]
+        row_counter = 1
+        if len(product_order_history_list) == 0:
+            tk.Label(vendor_product_frame,
+                     text="No Active Products found for this vendor.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_3,
+                     fg=self.formatting.colour_code_1).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+        else:
+            tk.Label(vendor_product_frame,
+                     text=str(len(product_order_history_list)) + " Total Active Products",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_3,
+                     fg=self.formatting.colour_code_1).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+            product_textbox = tk.Text(vendor_product_frame,
+                                      height=23,
+                                      width=60)
+            product_textbox.config(state=tk.NORMAL)
+            product_textbox.config(bg=self.formatting.colour_code_2)
+            product_textbox.insert(tk.END, " Product Name             | Cat #          | Unit of Issue \n")
+            product_textbox.insert(tk.END, "-----------------------------------------------------------\n")
+            for item in product_order_history_list:
+                product_textbox.insert(tk.END, (" " + str(item[1]) + " "*(25-len(str(item[1]))) + "| " +
+                                                str(item[2]) + " "*(15-len(str(item[2]))) + "| " +
+                                                str(item[3]) +
+                                                "\n"))
+            product_textbox.config(state=tk.DISABLED, wrap="word")
+            product_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+            row_counter += 1
+        # VENDOR ORDER FRAME WIDGETS
+        tk.Label(vendor_order_frame,
+                 text="Order History",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        vendor_order_history = self.select_db.left_join_multiple_tables(
+            "o.id, o.order_date, o.units_ordered, p.name",
+            [["orders o", "", "o.requests_id"],
+             ["requests r", "r.id", "r.products_id"],
+             ["products p", "p.id", "p.vendors_id"],
+             ["vendors v", "v.id", ""]],
+            "o.order_date DESC",
+            search_by=["v.id", '%' + str(vendor[0]) + '%']
+        )
+        order_history_list = []
+        date_differences = []
+        order_amounts = []
+        last_order = None
+        row_counter = 1
+        for item in vendor_order_history:
+            order_history_list.append(item)
+            if last_order:
+                current_order = datetime.date(int(item[1].split("-")[0]),
+                                              int(item[1].split("-")[1]),
+                                              int(item[1].split("-")[2]))
+                difference = last_order - current_order
+                last_order = current_order
+                date_differences.append(difference)
+            else:
+                last_order = datetime.date(int(item[1].split("-")[0]),
+                                           int(item[1].split("-")[1]),
+                                           int(item[1].split("-")[2]))
+            order_amounts.append(int(item[2]))
+        if len(date_differences) > 0:
+            average_timedelta = sum(date_differences, datetime.timedelta(0)) / len(date_differences)
+            tk.Label(vendor_order_frame,
+                     text="Average time between orders:",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+            tk.Label(vendor_order_frame,
+                     text=str(average_timedelta) + " hours.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10)
+            row_counter += 1
+        if len(order_amounts) > 0:
+            average_order_amount = sum(order_amounts) / len(order_amounts)
+            tk.Label(vendor_order_frame,
+                     text="Average order amount:",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+            tk.Label(vendor_order_frame,
+                     text="{:.1f}".format(float(average_order_amount)) + " units.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10)
+            row_counter += 1
+        else:
+            tk.Label(vendor_order_frame,
+                     text="No Orders Placed for this product.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_2).grid(
+                row=row_counter,
+                column=0,
+                columnspan=3,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
+            row_counter += 1
+        if len(order_amounts) > 0:
+            order_history_textbox = tk.Text(vendor_order_frame,
+                                            height=18,
+                                            width=55)
+            order_history_textbox.config(state=tk.NORMAL)
+            order_history_textbox.config(bg=self.formatting.colour_code_2)
+            order_history_textbox.insert(tk.END, " Product Name             | # Ordered  | Date \n")
+            order_history_textbox.insert(tk.END, "-----------------------------------------------------\n")
+            for item in order_history_list:
+                order_history_textbox.insert(tk.END, (" " + str(item[3]) + " "*(25-len(str(item[3]))) + "| " +
+                                                      str(item[2]) + " "*(11-len(str(item[2]))) + "| " +
+                                                      str(item[1]) +
+                                                      "\n"))
+            order_history_textbox.config(state=tk.DISABLED, wrap="word")
+            order_history_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+            row_counter += 1
+        vendor_information_frame.grid(row=0, column=0, sticky=tk.NW, padx=10, pady=10)
+        vendor_product_frame.grid(row=0, column=1, sticky=tk.NW, padx=10, pady=10)
+        vendor_order_frame.grid(row=0, column=2, sticky=tk.NW, padx=10, pady=10)
 
     def vendor_or_category_popup(self, table_to_edit, vendor_or_category):
         vendor_or_category_popup = tk.Toplevel()
@@ -686,3 +968,11 @@ class CategoriesVendorsView(tk.Frame):
         self.edit_db.archive_entry_in_table_by_id(table_to_access, vendor_to_archive[0])
         self.parent.display_categories_and_vendors_view(self.active_user)
         top_level_window.destroy()
+
+    def approve_vendor_request_and_reload_page(self, record_to_approve):
+        self.edit_db.edit_one_record_one_field_one_table("vendors", "approved", "1", record_to_approve[0])
+        self.parent.display_categories_and_vendors_view(self.active_user)
+
+    def approve_category_request_and_reload_page(self, record_to_approve):
+        self.edit_db.edit_one_record_one_field_one_table("categories", "approved", "1", record_to_approve[0])
+        self.parent.display_categories_and_vendors_view(self.active_user)
