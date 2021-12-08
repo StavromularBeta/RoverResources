@@ -379,4 +379,5 @@ class Select(Connector):
                 if search_by:
                     query += search_by[0] + " LIKE '" + search_by[1] + "'"
         query += " ORDER BY " + order_by_field
+        print(query)
         return self.print_or_return_query(query, False, print_view)
