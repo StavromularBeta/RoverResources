@@ -84,6 +84,14 @@ class ProductListView(tk.Frame):
                                      "Approved Status"]
         self.product_list_sort_value = tk.StringVar(self)
         self.product_list_sort_value.set("Product Name")
+        self.product_list_search_by = ["Product Name",
+                                       "Product Code",
+                                       "Vendor Name",
+                                       "Product Category",
+                                       "Product Sub-Category",
+                                       "Approved Status"]
+        self.product_list_search_value = tk.StringVar(self)
+        self.product_list_search_value.set("Product Name")
         self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
                                                             "Vendor Name": "v.vendor_name",
                                                             "Product Category": "c.category_name",
@@ -98,7 +106,7 @@ class ProductListView(tk.Frame):
 
     # MAIN METHODS ####################################################################################################
 
-    def products_list_view(self, user, sort_by=False, search_by=False):
+    def products_list_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
         """ Sets the method active user variable to the one that was passed from GUI_main_view.py, then starts the main
         method for the Product List View, create products list.
 
@@ -109,14 +117,16 @@ class ProductListView(tk.Frame):
             tuple in the form (credential ID, user name, user password, comments).
         """
         self.active_user = user
-        self.create_products_list(sort_by=sort_by, search_by=search_by)
+        self.create_products_list(sort_by=sort_by, search_by=search_by, search_by_variable=search_by_variable)
 
-    def create_products_list(self, sort_by=False, search_by=False):
+    def create_products_list(self, sort_by=False, search_by=False, search_by_variable=False):
         """First creates the products list navigation frame, which allows the user to interact with the view. Then gets
         all the products from the database. Makes the headers for the scrollable products list, and then populates it
         with the results from the products list query. Finally generates the canvas and scrollbar containing the info.
         """
-        self.get_products_list_from_database(sort_by=sort_by, search_by=search_by)
+        self.get_products_list_from_database(sort_by=sort_by,
+                                             search_by=search_by,
+                                             search_by_variable=search_by_variable)
         self.create_products_list_navigation_frame()
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
@@ -169,36 +179,46 @@ class ProductListView(tk.Frame):
                                    command=lambda: self.parent.display_products_list_view(
                                        self.active_user,
                                        sort_by=self.product_list_sort_value.get(),
-                                       search_by=product_search_entry.get())).grid(
+                                       search_by=product_search_entry.get(),
+                                       search_by_variable=self.product_list_search_value.get())).grid(
             row=0, column=4, sticky=tk.W, padx=10, pady=5
         )
+        type_of_search_menu = tk.OptionMenu(self.products_list_navigation_frame,
+                                            self.product_list_search_value,
+                                            *self.product_list_search_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
         tk.Label(self.products_list_navigation_frame,
                  text="Search:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
         product_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+        type_of_search_menu.grid(row=0, column=7, sticky=tk.W, pady=5)
         search_by_button = tk.Button(self.products_list_navigation_frame,
-                                     text="Search Name",
+                                     text="Search",
                                      font=self.formatting.medium_step_font,
                                      command=lambda: self.parent.display_products_list_view(
                                        self.active_user,
-                                       search_by=product_search_entry.get())).grid(
-            row=0, column=7, sticky=tk.W, padx=10, pady=5
+                                       search_by=product_search_entry.get(),
+                                       search_by_variable=self.product_list_search_value.get())).grid(
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
         tk.Button(self.products_list_navigation_frame,
-                  text="Latest Products",
+                  text="Clear All",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.parent.display_products_list_view(
                       self.active_user)).grid(
-            row=0, column=8, sticky=tk.W, padx=10, pady=5
+            row=0, column=9, sticky=tk.W, padx=10, pady=5
         )
 
-    def get_products_list_from_database(self, sort_by=None, search_by=None):
+    def get_products_list_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
         if sort_by and search_by:
             sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[sort_by]
+            search_by_field = self.sort_by_shopping_cart_conversion_dictionary[search_by_variable]
             self.search_by_active_term = search_by
             self.product_list_sort_value.set(sort_by)
+            self.product_list_search_value.set(search_by_variable)
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
                 " p.categories_id, p.sub_categories_id, p.unit_of_issue, p.approved",
@@ -207,12 +227,15 @@ class ProductListView(tk.Frame):
                  ["vendors v", "v.id", "p.sub_categories_id"],
                  ["sub_categories sc", "sc.id", '']],
                 sort_by_variable,
-                search_by=["p.name", '%' + search_by + '%'],
-                no_archive="p.archived")
+                search_by=[search_by_field, '%' + search_by + '%'],
+                no_archive="p.archived",
+                no_approved="p.approved")
         elif sort_by:
             pass
         elif search_by:
             self.search_by_active_term = search_by
+            search_by_field = self.sort_by_shopping_cart_conversion_dictionary[search_by_variable]
+            self.product_list_search_value.set(search_by_variable)
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.id, p.name, p.product_code, v.vendor_name, c.category_name, sc.sub_category_name, p.comments,"
                 " p.categories_id, p.sub_categories_id, p.unit_of_issue, p.approved",
@@ -222,7 +245,8 @@ class ProductListView(tk.Frame):
                  ["sub_categories sc", "sc.id", '']],
                 "p.name",
                 no_archive="p.archived",
-                search_by=["p.name", '%' + search_by + '%'])
+                no_approved="p.approved",
+                search_by=[search_by_field, '%' + search_by + '%'])
         else:
             pass
 

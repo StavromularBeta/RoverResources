@@ -39,23 +39,36 @@ class ShoppingCartView(tk.Frame):
                                      "Product Sub-Category"]
         self.product_list_sort_value = tk.StringVar(self)
         self.product_list_sort_value.set("Product Name")
+        self.product_list_search_by = ["Product Name",
+                                       "Product Code",
+                                       "Vendor Name",
+                                       "Product Category",
+                                       "Product Sub-Category",
+                                       "Approved Status"]
+        self.product_list_search_value = tk.StringVar(self)
+        self.product_list_search_value.set("Product Name")
         self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
                                                             "Vendor Name": "v.vendor_name",
                                                             "Product Category": "c.category_name",
                                                             "Product Sub-Category":
                                                                 "c.category_name, sc.sub_category_name",
                                                             "Product Name": "p.name"}
+        self.search_by_active_term = ""
 
     # MAIN METHODS
 
-    def shopping_cart_view(self, user, product_sort_by=False, product_search_by=False):
+    def shopping_cart_view(self,
+                           user,
+                           product_sort_by=False,
+                           product_search_by=False,
+                           product_search_by_variable=False):
         self.active_user = user
-        self.create_products_list(product_sort_by, product_search_by)
+        self.create_products_list(product_sort_by, product_search_by, product_search_by_variable)
         self.create_shopping_cart()
 
-    def create_products_list(self, product_sort_by=False, product_search_by=False):
+    def create_products_list(self, product_sort_by=False, product_search_by=False, product_search_by_variable=False):
         self.create_products_list_navigation_frame()
-        self.get_products_list_from_database(product_sort_by, product_search_by)
+        self.get_products_list_from_database(product_sort_by, product_search_by, product_search_by_variable)
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
         self.create_scrollable_products_list()
@@ -74,6 +87,8 @@ class ShoppingCartView(tk.Frame):
     # PRODUCTS LIST METHODS
 
     def create_products_list_navigation_frame(self):
+        product_search_entry = tk.Entry(self.products_list_navigation_frame)
+        product_search_entry.insert(0, self.search_by_active_term)
         tk.Label(self.products_list_navigation_frame,
                  text="Products List",
                  font=self.formatting.homepage_window_select_button_font,
@@ -88,70 +103,83 @@ class ShoppingCartView(tk.Frame):
                  text="Sort:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
-                 fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
+                 fg=self.formatting.colour_code_1).grid(row=0, column=1, sticky=tk.W, pady=5)
         type_of_sort_menu.grid(row=0, column=2, sticky=tk.W, pady=5)
         sort_by_button = tk.Button(self.products_list_navigation_frame,
                                    text="Sort",
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_shopping_cart_view(
                                        self.active_user,
-                                       self.product_list_sort_value.get())).grid(
-            row=0, column=4, sticky=tk.W, padx=10, pady=5
+                                       product_sort_by=self.product_list_sort_value.get(),
+                                       product_search_by=product_search_entry.get(),
+                                       product_search_by_variable=self.product_list_search_value.get())).grid(
+            row=0, column=3, sticky=tk.W, padx=10, pady=5
         )
+        type_of_search_menu = tk.OptionMenu(self.products_list_navigation_frame,
+                                            self.product_list_search_value,
+                                            *self.product_list_search_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
         tk.Label(self.products_list_navigation_frame,
                  text="Search:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
-                 fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
-        product_search_entry = tk.Entry(self.products_list_navigation_frame)
-        product_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+                 fg=self.formatting.colour_code_1).grid(row=0, column=4, sticky=tk.W, pady=5)
+        product_search_entry.grid(row=0, column=5, sticky=tk.W, pady=5)
+        type_of_search_menu.grid(row=0, column=6, sticky=tk.W, pady=5)
         search_by_button = tk.Button(self.products_list_navigation_frame,
-                                     text="Search Name",
+                                     text="Search",
                                      font=self.formatting.medium_step_font,
                                      command=lambda: self.parent.display_shopping_cart_view(
                                        self.active_user,
-                                       product_search_by=product_search_entry.get())).grid(
+                                       product_search_by=product_search_entry.get(),
+                                       product_search_by_variable=self.product_list_search_value.get())).grid(
             row=0, column=7, sticky=tk.W, padx=10, pady=5
         )
         tk.Button(self.products_list_navigation_frame,
-                  text="All",
+                  text="Clear All",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.parent.display_shopping_cart_view(
                       self.active_user)).grid(
             row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
 
-    def get_products_list_from_database(self, product_sort_by=None, product_search_by=None):
-        if product_sort_by:
+    def get_products_list_from_database(self,
+                                        product_sort_by=None,
+                                        product_search_by=None,
+                                        product_search_by_variable=None):
+        if product_sort_by and product_search_by:
             sort_by_variable = self.sort_by_shopping_cart_conversion_dictionary[product_sort_by]
+            search_by_field = self.sort_by_shopping_cart_conversion_dictionary[product_search_by_variable]
+            self.search_by_active_term = product_search_by
             self.product_list_sort_value.set(product_sort_by)
+            self.product_list_search_value.set(product_search_by_variable)
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
                 [["products p", "", "p.categories_id"],
                  ["categories c", "c.id", "p.vendors_id"],
                  ["vendors v", "v.id", "p.sub_categories_id"],
-                 ["sub_categories sc", "sc.id", ""]],
+                 ["sub_categories sc", "sc.id", '']],
                 sort_by_variable,
+                search_by=[search_by_field, '%' + product_search_by + '%'],
                 no_archive="p.archived")
+        elif product_sort_by:
+            pass
         elif product_search_by:
+            self.search_by_active_term = product_search_by
+            search_by_field = self.sort_by_shopping_cart_conversion_dictionary[product_search_by_variable]
+            self.product_list_search_value.set(product_search_by_variable)
             self.products_list = self.select_db.left_join_multiple_tables(
                 "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
                 [["products p", "", "p.categories_id"],
                  ["categories c", "c.id", "p.vendors_id"],
                  ["vendors v", "v.id", "p.sub_categories_id"],
-                 ["sub_categories sc", "sc.id", ""]],
+                 ["sub_categories sc", "sc.id", '']],
                 "p.name",
                 no_archive="p.archived",
-                search_by=["p.name", '%' + product_search_by + '%'])
+                search_by=[search_by_field, '%' + product_search_by + '%'])
         else:
-            self.products_list = self.select_db.left_join_multiple_tables(
-                "p.name, p.product_code, v.vendor_name, c.category_name, p.id, sc.sub_category_name, p.unit_of_issue",
-                 [["products p", "", "p.categories_id"],
-                 ["categories c", "c.id", "p.vendors_id"],
-                 ["vendors v", "v.id", "p.sub_categories_id"],
-                 ["sub_categories sc", "sc.id", ""]],
-                "p.name",
-                no_archive="p.archived")
+            pass
 
     def create_scrollable_products_list(self):
         products_list_canvas = tk.Canvas(self.products_list_scrollable_container,
@@ -203,6 +231,16 @@ class ShoppingCartView(tk.Frame):
     def populate_scrollable_products_list(self):
         row_counter = 1
         even_odd = 1
+        try:
+            if len(self.products_list) == 0:
+                tk.Label(self.products_list_frame,
+                         text="Search for a product to get started.",
+                         font=self.formatting.medium_step_font,
+                         bg=self.formatting.colour_code_1,
+                         fg=self.formatting.colour_code_3).grid(
+                    row=1, column=1, columnspan=5, sticky=tk.W, pady=5, padx=10)
+        except TypeError:
+            pass
         for item in self.products_list:
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
