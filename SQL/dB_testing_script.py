@@ -116,7 +116,7 @@ new_selection.\
 
 new_selection.select_all_from_table("users", True)
 
-"""
+
 
 new_entry.new_credentials_record(("Full", "Grants Full Access to all functionality."))
 new_entry.new_credentials_record(("Basic", "Grants the lowest level of functionality."))
@@ -154,7 +154,7 @@ new_entry.new_vendors_record(("Oxoid", "Supplier of Media."))
 new_entry.new_vendors_record(("Dell", "Supplier of Computers."))
 new_entry.new_vendors_record(("Phenomenex", "Supplier of Analytical Columns."))
 
-"""
+
 new_entry.new_products_record((1, 7, 1, "I4883", "Ibuprofen (>98%)", "Internal Standard for Cannabis Potency."))
 new_entry.new_products_record((1, 2, 1, "C-144", "Cannabidiolic acid solution", "CBDA for Cannabis Potency."))
 new_entry.new_products_record((1, 2, 1, "34090", "d8-Tetrahydrocannabinol (d8-THC) Standard",
@@ -163,3 +163,4 @@ new_entry.new_products_record((1, 2, 1, "34090", "d8-Tetrahydrocannabinol (d8-TH
 
 new_entry.new_products_record((5, 12, 1, "320331", "Hydrochloric acid", "Hydrochloric Acid for Metals analysis."))
 """
+new_entry.new_credentials_record(("Basic with Receiving", "Grants the lowest level of functionality, and the ability to receive products."))

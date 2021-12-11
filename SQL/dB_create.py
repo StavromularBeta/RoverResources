@@ -142,6 +142,8 @@ class CreateTb(Connector):
             self.db_views.view_database_architecture()
 
     def db_table_add_approved_column(self):
+        """Iterates through the table dictionary and adds a field called approved, which is a bool, and is default
+        true. This field allows products to be requested, as well as added directly by an admin. """
         for key, value in self.table_dictionary.items():
             query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT True"
             self.db_connector(query)

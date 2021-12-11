@@ -2,6 +2,11 @@ from SQL.dB_connector import Connector
 
 
 class AddDelete(Connector):
+    """Handles addition of new records to the database. The space for handling deletion of records from the database
+    (not written yet).
+
+    last updated 10 December 2021.
+    """
     def __init__(self):
         super(AddDelete, self).__init__()
         super(self.__class__, self).__init__()
@@ -17,6 +22,10 @@ class AddDelete(Connector):
 
         values : tuple
             (category name, comments)
+
+        request : bool
+            optional. If True, product approved status is set to 0. Requested products need to be confirmed by
+            an administrator to be approved.
         """
         if request:
             query = 'INSERT OR IGNORE INTO categories (category_name, comments, approved) VALUES (?,?,?)'
@@ -33,6 +42,10 @@ class AddDelete(Connector):
 
         values : tuple
             (categories ID, category name, comments)
+
+        request : bool
+            optional. If True, product approved status is set to 0. Requested products need to be confirmed by
+            an administrator to be approved.
         """
         if request:
             query = 'INSERT OR IGNORE INTO ' +\
@@ -50,6 +63,10 @@ class AddDelete(Connector):
 
         values : tuple
             (vendor name, comments)
+
+        request : bool
+            optional. If True, product approved status is set to 0. Requested products need to be confirmed by
+            an administrator to be approved.
         """
         if request:
             query = 'INSERT OR IGNORE INTO vendors (vendor_name, comments, approved) VALUES (?,?,?)'
@@ -67,6 +84,10 @@ class AddDelete(Connector):
 
         values : tuple
             (category ID, sub category ID, vendors ID, product code, name, unit of issue, comments)
+
+        request : bool
+            optional. If True, product approved status is set to 0. Requested products need to be confirmed by
+            an administrator to be approved.
         """
         if request:
             query = 'INSERT OR IGNORE' \
