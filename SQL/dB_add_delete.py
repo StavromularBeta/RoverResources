@@ -188,31 +188,49 @@ class AddDelete(Connector):
                 'model, equipment_SN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_active_inventory_record(self, values):
-        """Inserts new record into active inventory. Received records become inventory items. Additional information
-        may be added to the inventory record upon receiving, such as expiry dates and batch numbers.
+    def new_inventory_record(self, values):
+        """Inserts new record into inventory. Received records become inventory items.
 
         Parameters
         ----------
 
         values : tuple
-            (received ID, lab location, amount)
+            (received_id, location_id, sub_location_id, full_units_remaining, partial_units_remaining,
+            last_updated, updated_user_id, comments)
         """
-        query = 'INSERT OR IGNORE INTO active_inventory (received_id, location, amount) VALUES (?,?,?)'
+        query = 'INSERT OR IGNORE' \
+                ' INTO inventory' \
+                ' (received_id, location_id, sub_location_id, full_units_remaining, partial_units_remaining,' \
+                ' last_updated, updated_user_id, comments) VALUES (?,?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_archived_inventory_record(self, values):
-        """Inserts new record into archived inventory. When active inventory items are consumed, discontinued, or
-        disposed of, they become archived records. Only inventory items currently valid and in use in the lab are
-        found in the active inventory table.
+    def new_inventory_location_record(self, values):
+        """Inserts new record into inventory locations table. Inventory items have a location.
 
         Parameters
         ----------
 
         values : tuple
-            (received ID, archived_date)
+            (locations_name, comments)
         """
-        query = 'INSERT OR IGNORE INTO archived_inventory (received_id, archived_date) VALUES (?,?)'
+        query = 'INSERT OR IGNORE' \
+                ' INTO inventoryLocations' \
+                ' (locations_name, comments) VALUES (?,?)'
+        return self.db_connector(query, values)
+
+    def new_sub_inventory_location_record(self, values):
+        """Inserts new record into inventory sub locations table. Inventory items that are in a location
+        may have a sub-location.
+
+        Parameters
+        ----------
+
+        values : tuple
+            (locations_id, sub_locations_name, comments)
+        """
+        query = 'INSERT OR IGNORE' \
+                ' INTO inventorySubLocations' \
+                ' (locations_id, sub_locations_name, comments) VALUES (?,?,?)'
         return self.db_connector(query, values)
 
     # DELETING METHODS

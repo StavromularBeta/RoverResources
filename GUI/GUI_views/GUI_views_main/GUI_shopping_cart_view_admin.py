@@ -63,7 +63,7 @@ class ShoppingCartViewAdmin(tk.Frame):
 
     def create_shopping_cart_navigation_frame(self):
         tk.Label(self.shopping_cart_navigation_frame,
-                 text="All Shopping Carts (Admin: " + self.active_user[2] + ")",
+                 text="All Shopping Carts",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -226,8 +226,12 @@ class ShoppingCartViewAdmin(tk.Frame):
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
+            if len(item[0]) > 20:
+                product_name = item[0][0:20] + "..."
+            else:
+                product_name = item[0]
             tk.Label(self.shopping_cart_frame,
-                     text=item[0],
+                     text=product_name,
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
@@ -272,22 +276,23 @@ class ShoppingCartViewAdmin(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=9, sticky=tk.W, padx=10, pady=5)
-            tk.Button(self.shopping_cart_frame,
-                      text="Remove Request",
-                      font=self.formatting.medium_step_font,
-                      command=lambda item=item: self.remove_product_from_cart(item[9])).grid(row=row_counter,
-                                                                                             column=10,
-                                                                                             sticky=tk.W,
-                                                                                             padx=10,
-                                                                                             pady=5)
-            tk.Button(self.shopping_cart_frame,
-                      text="Order",
-                      font=self.formatting.medium_step_font,
-                      command=lambda item=item: self.order_product_popup(item[9], item[0])).grid(row=row_counter,
-                                                                                                 column=11,
+            if self.active_user[1] == 1:
+                tk.Button(self.shopping_cart_frame,
+                          text="Remove Request",
+                          font=self.formatting.medium_step_font,
+                          command=lambda item=item: self.remove_product_from_cart(item[9])).grid(row=row_counter,
+                                                                                                 column=10,
                                                                                                  sticky=tk.W,
                                                                                                  padx=10,
                                                                                                  pady=5)
+                tk.Button(self.shopping_cart_frame,
+                          text="Order",
+                          font=self.formatting.medium_step_font,
+                          command=lambda item=item: self.order_product_popup(item[9], item[0])).grid(row=row_counter,
+                                                                                                     column=11,
+                                                                                                     sticky=tk.W,
+                                                                                                     padx=10,
+                                                                                                     pady=5)
             row_counter += 1
             even_odd += 1
             self.admin_shopping_cart_canvas_length += 50

@@ -162,5 +162,12 @@ new_entry.new_products_record((1, 2, 1, "34090", "d8-Tetrahydrocannabinol (d8-TH
 
 
 new_entry.new_products_record((5, 12, 1, "320331", "Hydrochloric acid", "Hydrochloric Acid for Metals analysis."))
-"""
+
 new_entry.new_credentials_record(("Basic with Receiving", "Grants the lowest level of functionality, and the ability to receive products."))
+
+
+new_entry.new_inventory_location_record(("upstairs", ""))
+new_entry.new_inventory_location_record(("downstairs", ""))
+new_entry.new_sub_inventory_location_record((1, "none", ""))
+new_entry.new_sub_inventory_location_record((2, "none", ""))
+"""

@@ -160,7 +160,9 @@ class ProductListView(tk.Frame):
         # makes headers for products table
         self.make_scrollable_products_list_header_labels()
         # populates products table
-        self.populate_scrollable_products_list()
+        self.populate_scrollable_products_list(sort_by=sort_by,
+                                               search_by=search_by,
+                                               search_by_variable=search_by_variable)
         # sets up the canvas and scrollbar
         self.create_scrollable_products_list()
         self.products_list_navigation_frame.grid(row=0, column=0, sticky=tk.W, pady=10)
@@ -390,7 +392,10 @@ class ProductListView(tk.Frame):
                                                                               self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(product_approved_header, 0, 7)
 
-    def populate_scrollable_products_list(self):
+    def populate_scrollable_products_list(self,
+                                          sort_by=False,
+                                          search_by=False,
+                                          search_by_variable=False):
         row_counter = 1
         even_odd = 1
         try:
@@ -408,8 +413,12 @@ class ProductListView(tk.Frame):
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
+            if len(item[1]) > 20:
+                product_name = item[1][0:20] + "..."
+            else:
+                product_name = item[1]
             product_name_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
-                                                                             item[1],
+                                                                             product_name,
                                                                              text_color)
             self.formatting.grid_shopping_cart_labels(product_name_label, row_counter, 1)
             product_id_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
@@ -451,11 +460,16 @@ class ProductListView(tk.Frame):
                 tk.Button(self.products_list_frame,
                           text="Open",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.individual_product_popup(item)).grid(row=row_counter,
-                                                                                              column=8,
-                                                                                              sticky=tk.W,
-                                                                                              padx=10,
-                                                                                              pady=5)
+                          command=lambda item=item: self.individual_product_popup(item,
+                                                                                  sort_by=sort_by,
+                                                                                  search_by=search_by,
+                                                                                  search_by_variable=search_by_variable)
+                          ).grid(
+                    row=row_counter,
+                    column=8,
+                    sticky=tk.W,
+                    padx=10,
+                    pady=5)
                 tk.Button(self.products_list_frame,
                           text="Archive",
                           font=self.formatting.medium_step_font,
@@ -645,7 +659,11 @@ class ProductListView(tk.Frame):
 
     # INDIVIDUAL PRODUCT MAIN POPUP ##################################################################################
 
-    def individual_product_popup(self, product):
+    def individual_product_popup(self,
+                                 product,
+                                 sort_by=False,
+                                 search_by=False,
+                                 search_by_variable=False):
         individual_product_popup = tk.Toplevel()
         product_frame = tk.Frame(individual_product_popup)
         pricing_frame = tk.Frame(individual_product_popup)
@@ -713,49 +731,77 @@ class ProductListView(tk.Frame):
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
-                                                                                      "name",
-                                                                                      individual_product_popup)).grid(
+                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(
+                          product,
+                          "name",
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=1, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
-                                                                                      "product_code",
-                                                                                      individual_product_popup)).grid(
+                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(
+                          product,
+                          "product_code",
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=2, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_vendor_or_category_popup(product,
-                                                                                 "vendors",
-                                                                                 individual_product_popup)).grid(
+                      command=lambda: self.edit_product_vendor_or_category_popup(
+                          product,
+                          "vendors",
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=3, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_vendor_or_category_popup(product,
-                                                                                 "categories",
-                                                                                 individual_product_popup)).grid(
+                      command=lambda: self.edit_product_vendor_or_category_popup(
+                          product,
+                          "categories",
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=4, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_sub_category_popup(product,
-                                                                           individual_product_popup)).grid(
+                      command=lambda: self.edit_product_sub_category_popup(
+                          product,
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=5, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(product,
-                                                                                      "unit_of_issue",
-                                                                                      individual_product_popup)).grid(
+                      command=lambda: self.edit_product_name_unit_or_catalog_id_popup(
+                          product,
+                          "unit_of_issue",
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=6, column=1, sticky=tk.W, padx=10, pady=10)
             tk.Button(product_frame,
                       text="Edit Notes",
                       font=self.formatting.medium_step_font,
-                      command=lambda: self.edit_notes_popup(product,
-                                                            individual_product_popup)).grid(
+                      command=lambda: self.edit_notes_popup(
+                          product,
+                          individual_product_popup,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
                 row=8, column=0, sticky=tk.W, padx=10, pady=10)
         # PRICING FRAME WIDGETS
         pricing_info_label = tk.Label(pricing_frame,
@@ -1106,7 +1152,12 @@ class ProductListView(tk.Frame):
                       add_new_price_popup,
                       historical_price_popup)).grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
 
-    def edit_notes_popup(self, product, individual_product_popup):
+    def edit_notes_popup(self,
+                         product,
+                         individual_product_popup,
+                         sort_by=False,
+                         search_by=False,
+                         search_by_variable=False):
         edit_notes_popup = tk.Toplevel()
         edit_notes_popup.config(bg=self.formatting.colour_code_1)
         edit_notes_popup.geometry('500x160')
@@ -1120,14 +1171,24 @@ class ProductListView(tk.Frame):
         tk.Button(edit_notes_popup,
                   text="Commit Changes",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(product_notes.get("1.0", tk.END),
-                                                                                     product,
-                                                                                     "comments",
-                                                                                     edit_notes_popup,
-                                                                                     individual_product_popup)).grid(
+                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(
+                      product_notes.get("1.0", tk.END),
+                      product,
+                      "comments",
+                      edit_notes_popup,
+                      individual_product_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=1, column=0, sticky=tk.W, padx=10, pady=10)
 
-    def edit_product_name_unit_or_catalog_id_popup(self, product_to_edit, field_to_edit, individual_product_popup):
+    def edit_product_name_unit_or_catalog_id_popup(self,
+                                                   product_to_edit,
+                                                   field_to_edit,
+                                                   individual_product_popup,
+                                                   sort_by=False,
+                                                   search_by=False,
+                                                   search_by_variable=False):
         edit_product_popup = tk.Toplevel()
         edit_product_popup.config(bg=self.formatting.colour_code_1)
         edit_product_popup.geometry('500x90')
@@ -1147,14 +1208,24 @@ class ProductListView(tk.Frame):
         tk.Button(edit_product_popup,
                   text="Commit Change",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(new_value_entry,
-                                                                                     product_to_edit,
-                                                                                     field_to_edit,
-                                                                                     edit_product_popup,
-                                                                                     individual_product_popup)).grid(
+                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(
+                      new_value_entry,
+                      product_to_edit,
+                      field_to_edit,
+                      edit_product_popup,
+                      individual_product_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
-    def edit_product_vendor_or_category_popup(self, product_to_edit, field_to_edit, individual_product_popup):
+    def edit_product_vendor_or_category_popup(self,
+                                              product_to_edit,
+                                              field_to_edit,
+                                              individual_product_popup,
+                                              sort_by=False,
+                                              search_by=False,
+                                              search_by_variable=False):
         vendors_or_categories_dict = {}
         vendors_or_categories_list = []
         vendors_or_categories = self.select_db.select_all_from_table(field_to_edit)
@@ -1188,10 +1259,18 @@ class ProductListView(tk.Frame):
                       product_to_edit,
                       field_to_edit+"_id",
                       edit_product_popup,
-                      individual_product_popup)).grid(
+                      individual_product_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
-    def edit_product_sub_category_popup(self, product, top_level_window):
+    def edit_product_sub_category_popup(self,
+                                        product,
+                                        top_level_window,
+                                        sort_by=False,
+                                        search_by=False,
+                                        search_by_variable=False):
         sub_category_dict = {}
         sub_category_list = []
         product_category_sub_cats = self.select_db.select_all_from_table_where_one_field_equals("sub_categories",
@@ -1224,7 +1303,10 @@ class ProductListView(tk.Frame):
                       product,
                       "sub_categories_id",
                       edit_sub_category_popup,
-                      top_level_window)).grid(
+                      top_level_window,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=0, column=2, sticky=tk.W, padx=10, pady=10)
 
     def give_new_product_price_popup(self, new_product_window):
@@ -1312,7 +1394,10 @@ class ProductListView(tk.Frame):
                                                       product_to_edit,
                                                       field_to_edit,
                                                       top_level_window,
-                                                      product_window):
+                                                      product_window,
+                                                      sort_by=False,
+                                                      search_by=False,
+                                                      search_by_variable=False):
         try:
             new_value_entry = new_value_entry.get()
         except AttributeError:
@@ -1320,7 +1405,10 @@ class ProductListView(tk.Frame):
         self.edit_db.edit_one_product_field(field_to_edit, new_value_entry, product_to_edit[0])
         top_level_window.destroy()
         product_window.destroy()
-        self.parent.display_products_list_view(self.active_user)
+        self.parent.display_products_list_view(self.active_user,
+                                               sort_by=sort_by,
+                                               search_by=search_by,
+                                               search_by_variable=search_by_variable)
 
     def add_new_price_query_and_reload_products_page(self,
                                                      values,

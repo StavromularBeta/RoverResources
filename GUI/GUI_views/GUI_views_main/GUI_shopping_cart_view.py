@@ -246,8 +246,12 @@ class ShoppingCartView(tk.Frame):
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
+            if len(item[0]) > 20:
+                product_name = item[0][0:20] + "..."
+            else:
+                product_name = item[0]
             product_name_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
-                                                                             item[0],
+                                                                             product_name,
                                                                              text_color)
             self.formatting.grid_shopping_cart_labels(product_name_label, row_counter, 1)
             product_id_label = self.formatting.create_shopping_cart_labels(self.products_list_frame,
@@ -369,8 +373,12 @@ class ShoppingCartView(tk.Frame):
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
+            if len(item[0]) > 20:
+                product_name = item[0][0:20] + "..."
+            else:
+                product_name = item[0]
             tk.Label(self.shopping_cart_frame,
-                     text=item[0],
+                     text=product_name,
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)

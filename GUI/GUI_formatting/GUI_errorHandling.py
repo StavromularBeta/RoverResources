@@ -70,3 +70,13 @@ class ErrorHandling:
         if len(str(entry_to_check)) == 0:
             test_pass = False
         return test_pass
+
+    def checkIfInt(self, int_to_check):
+        test_pass = True
+        try:
+            int(int_to_check)
+        except ValueError:
+            test_pass = False
+            return test_pass
+        return test_pass
+
