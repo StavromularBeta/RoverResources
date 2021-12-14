@@ -119,6 +119,7 @@ class CategoriesVendorsView(tk.Frame):
         self.populate_scrollable_vendors_list()
         self.create_scrollable_vendors_list()
         self.vendors_list_scrollable_container.grid(row=1, column=0, sticky=tk.W, pady=5)
+        self.vendors_navigation_frame.lift()
 
     def create_categories_list(self):
         self.get_categories_list_from_database()

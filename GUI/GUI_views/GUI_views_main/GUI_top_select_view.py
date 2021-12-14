@@ -55,14 +55,13 @@ class TopSelectView(tk.Frame):
                                           command=lambda: self.parent.display_shopping_cart_view(self.active_user))
         display_personal_cart.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
         column_count += 1
-        if self.active_user[1] == 1:
-            display_all_carts = tk.Button(self,
-                                          text="All Shopping Carts",
-                                          font=self.formatting.medium_step_font,
-                                          command=lambda: self.parent.display_admin_shopping_cart_view(
-                                              self.active_user))
-            display_all_carts.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
-            column_count += 1
+        display_all_carts = tk.Button(self,
+                                      text="All Shopping Carts",
+                                      font=self.formatting.medium_step_font,
+                                      command=lambda: self.parent.display_admin_shopping_cart_view(
+                                          self.active_user))
+        display_all_carts.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         orders_view = tk.Button(self,
                                 text="Orders",
                                 font=self.formatting.medium_step_font,
@@ -74,6 +73,13 @@ class TopSelectView(tk.Frame):
                                   text="Receiving",
                                   font=self.formatting.medium_step_font,
                                   command=lambda: self.parent.display_received_view(
+                                      self.active_user))
+        received_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
+        received_view = tk.Button(self,
+                                  text="Inventory",
+                                  font=self.formatting.medium_step_font,
+                                  command=lambda: self.parent.display_inventory_view(
                                       self.active_user))
         received_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
         column_count += 1

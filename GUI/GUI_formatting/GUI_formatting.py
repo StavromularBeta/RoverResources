@@ -10,6 +10,7 @@ class TkFormattingMethods:
         self.colour_code_3 = "#e6e7bd"
         self.colour_code_green = '#186915'
         self.colour_code_red = '#9e3315'
+        self.colour_code_purple = '#5c3882'
         self.banner_font = tk_font.Font(size=48, weight="bold")
         self.homepage_window_select_button_font = tk_font.Font(size=18, weight="bold")
         self.medium_step_font = tk_font.Font(size=12, weight="bold")

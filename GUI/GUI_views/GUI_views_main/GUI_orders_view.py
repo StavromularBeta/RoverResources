@@ -286,15 +286,15 @@ class OrdersView(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=10, sticky=tk.W, padx=10, pady=5)
-            if self.active_user[1] == 1:
+            if self.active_user[1] in [1, 3]:
                 tk.Button(self.orders_frame,
                           text="Receive Order",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.receive_product_popup(item[10])).grid(row=row_counter,
-                                                                                           column=11,
-                                                                                           sticky=tk.W,
-                                                                                           padx=10,
-                                                                                           pady=5)
+                                                                                               column=11,
+                                                                                               sticky=tk.W,
+                                                                                               padx=10,
+                                                                                               pady=5)
             row_counter += 1
             even_odd += 1
             self.orders_canvas_length += 50

@@ -115,13 +115,33 @@ class CreateTb(Connector):
                                                     archived bool DEFAULT False,
                                                     approved bool DEFAULT True) """,
 
-                                "inventory": """ CREATE TABLE IF NOT EXISTS active_inventory (
+                                "inventory": """ CREATE TABLE IF NOT EXISTS inventory (
                                                             id integer PRIMARY KEY,
-                                                            received_id,
-                                                            location text,
-                                                            amount float,
+                                                            received_id int,
+                                                            location_id int,
+                                                            sub_location_id int,
+                                                            full_units_remaining int,
+                                                            partial_units_remaining int,
+                                                            last_updated datetime,
+                                                            updated_user_id int,
+                                                            comments text,
                                                             archived bool DEFAULT False,
-                                                            approved bool DEFAULT True) """
+                                                            approved bool DEFAULT True) """,
+
+                                "inventoryLocations": """ CREATE TABLE IF NOT EXISTS inventoryLocations (
+                                                              id integer PRIMARY KEY,
+                                                              locations_name text,
+                                                              comments text,
+                                                              archived bool DEFAULT False,
+                                                              approved bool DEFAULT True) """,
+
+                                "inventorySubLocations": """ CREATE TABLE IF NOT EXISTS inventorySubLocations (
+                                                                id integer PRIMARY KEY,
+                                                                locations_id int,
+                                                                sub_locations_name text,
+                                                                comments text,
+                                                                archived bool DEFAULT False,
+                                                                approved bool DEFAULT True) """,
                                  }
         self.db_views = DbViews()
 
@@ -142,9 +162,17 @@ class CreateTb(Connector):
             self.db_views.view_database_architecture()
 
     def db_table_add_approved_column(self):
+        """Iterates through the table dictionary and adds a field called approved, which is a bool, and is default
+        true. This field allows products to be requested, as well as added directly by an admin. """
         for key, value in self.table_dictionary.items():
             query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT True"
             self.db_connector(query)
+
+    def db_drop_table(self, table_name):
+        """Iterates through the table dictionary and adds a field called approved, which is a bool, and is default
+        true. This field allows products to be requested, as well as added directly by an admin. """
+        query = "DROP TABLE " + table_name
+        self.db_connector(query)
 
 
 # set up to create tables if run, and print tables to console.
