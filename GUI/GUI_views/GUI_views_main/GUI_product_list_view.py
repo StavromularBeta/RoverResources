@@ -84,6 +84,7 @@ class ProductListView(tk.Frame):
                                      "Vendor Name",
                                      "Product Category",
                                      "Product Sub-Category",
+                                     "Units",
                                      "Approved Status"]
         self.product_list_sort_value = tk.StringVar(self)
         self.product_list_sort_value.set("Product Name")
@@ -93,16 +94,16 @@ class ProductListView(tk.Frame):
                                        "Vendor Name",
                                        "Product Category",
                                        "Product Sub-Category",
-                                       "Approved Status"]
+                                       "Units"]
         self.product_list_search_value = tk.StringVar(self)
         self.product_list_search_value.set("Product Name")
         # dictionary that converts readable search/sort options into SQL field names
         self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
                                                             "Vendor Name": "v.vendor_name",
                                                             "Product Category": "c.category_name",
-                                                            "Product Sub-Category":
-                                                                "c.category_name, sc.sub_category_name",
+                                                            "Product Sub-Category": "sc.sub_category_name",
                                                             "Product Name": "p.name",
+                                                            "Units": "p.unit_of_issue",
                                                             "Approved Status": "p.approved"}
         # holds the current term user is searching by so it can persist if page reloaded
         self.search_by_active_term = ""

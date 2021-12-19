@@ -27,30 +27,50 @@ class OrdersView(tk.Frame):
         self.orders_frame.config(bg=self.formatting.colour_code_1)
         self.orders_navigation_frame = tk.Frame(self)
         self.orders_navigation_frame.config(bg=self.formatting.colour_code_2)
-        self.sort_orders_view_by = ["Staff Member",
+        self.sort_orders_view_by = ["Product Name",
                                     "Product Code",
                                     "Vendor Name",
                                     "Product Category",
                                     "Order Date",
-                                    "Product Name",
-                                    "Cost per Unit"]
+                                    "Units",
+                                    "Cost",
+                                    "Staff Member",
+                                    "Request Amount",
+                                    "Order Amount"]
         self.orders_sort_value = tk.StringVar(self)
-        self.orders_sort_value.set("Staff Member")
+        self.orders_sort_value.set("Product Name")
+        self.sort_orders_search_by = ["Product Name",
+                                      "Product Code",
+                                      "Vendor Name",
+                                      "Product Category",
+                                      "Units",
+                                      "Staff Member"]
+        self.orders_search_value = tk.StringVar(self)
+        self.orders_search_value.set("Product Name")
         self.sort_by_orders_conversion_dictionary = {"Staff Member": "u.user_name",
                                                      "Product Code": "p.product_code",
                                                      "Vendor Name": "v.vendor_name",
                                                      "Product Category": "c.category_name",
                                                      "Order Date": "o.order_date",
                                                      "Product Name": "p.name",
-                                                     "Cost per Unit": "pt.cost"}
+                                                     "Cost": "pt.cost",
+                                                     "Units": "p.unit_of_issue",
+                                                     "Request Amount": "r.amount",
+                                                     "Order Amount": "o.units_ordered"}
+        self.search_by_active_term = ""
+        self.sort_by = ""
+        self.search_by_variable = ""
         self.popup_error_message = tk.Label()
 
-    def orders_view(self, user, sort_by=False, search_by=False):
+    def orders_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
+        self.sort_by = sort_by
+        self.search_by_active_term = search_by
+        self.search_by_variable = search_by_variable
         self.active_user = user
-        self.create_orders_view(sort_by, search_by)
+        self.create_orders_view(sort_by, search_by, search_by_variable)
 
-    def create_orders_view(self, sort_by=False, search_by=False):
-        self.get_active_orders_from_database(sort_by, search_by)
+    def create_orders_view(self, sort_by=False, search_by=False, search_by_variable=False):
+        self.get_active_orders_from_database(sort_by, search_by, search_by_variable)
         self.make_scrollable_orders_header_labels()
         self.populate_scrollable_orders_list()
         self.create_scrollable_orders_view()
@@ -59,6 +79,9 @@ class OrdersView(tk.Frame):
         self.orders_scrollable_container.grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
 
     def create_orders_navigation_frame(self):
+        orders_search_entry = tk.Entry(self.orders_navigation_frame)
+        if self.search_by_active_term:
+            orders_search_entry.insert(0, self.search_by_active_term)
         tk.Label(self.orders_navigation_frame,
                  text="All Orders",
                  font=self.formatting.homepage_window_select_button_font,
@@ -85,7 +108,9 @@ class OrdersView(tk.Frame):
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_orders_view(
                                        self.active_user,
-                                       self.orders_sort_value.get())).grid(
+                                       sort_by=self.orders_sort_value.get(),
+                                       search_by=self.search_by_active_term,
+                                       search_by_variable=self.search_by_variable)).grid(
             row=0, column=4, sticky=tk.W, padx=10, pady=5
         )
         tk.Label(self.orders_navigation_frame,
@@ -93,26 +118,52 @@ class OrdersView(tk.Frame):
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=5, sticky=tk.W, pady=5)
-        orders_search_entry = tk.Entry(self.orders_navigation_frame)
         orders_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+        # searching tk widgets
+        type_of_search_menu = tk.OptionMenu(self.orders_navigation_frame,
+                                            self.orders_search_value,
+                                            *self.sort_orders_search_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
+        type_of_search_menu.grid(row=0, column=7, sticky=tk.W, padx=10, pady=5)
         search_by_button = tk.Button(self.orders_navigation_frame,
-                                     text="Search Name",
+                                     text="Search",
                                      font=self.formatting.medium_step_font,
                                      command=lambda: self.parent.display_orders_view(
                                        self.active_user,
-                                       search_by=orders_search_entry.get())).grid(
-            row=0, column=7, sticky=tk.W, padx=10, pady=5
+                                       sort_by=self.sort_by,
+                                       search_by=orders_search_entry.get(),
+                                       search_by_variable=self.orders_search_value.get())).grid(
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
         tk.Button(self.orders_navigation_frame,
                   text="All",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.parent.display_orders_view(
                       self.active_user)).grid(
-            row=0, column=8, sticky=tk.W, padx=10, pady=5
+            row=0, column=9, sticky=tk.W, padx=10, pady=5
         )
 
-    def get_active_orders_from_database(self, sort_by=None, search_by=None):
-        if sort_by:
+    def get_active_orders_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
+        if sort_by and search_by:
+            sort_by_variable = self.sort_by_orders_conversion_dictionary[sort_by]
+            self.orders_sort_value.set(sort_by)
+            self.search_by_active_term = search_by
+            search_by_field = self.sort_by_orders_conversion_dictionary[search_by_variable]
+            self.orders = self.select_db.\
+                left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
+                                          " pt.cost, u.user_name, r.amount, o.units_ordered, o.order_date, o.id",
+                                          [["orders o", "", "o.requests_id"],
+                                           ["requests r", "r.id", "r.users_id"],
+                                           ["users u", "u.id", "r.products_id"],
+                                           ["products p", "p.id", "p.vendors_id"],
+                                           ["vendors v", "v.id", "p.categories_id"],
+                                           ["categories c", "c.id", "r.price_id"],
+                                           ["priceTracking pt", "pt.id", ""]],
+                                          sort_by_variable,
+                                          no_archive="o.archived",
+                                          search_by=[search_by_field, '%' + search_by + '%'])
+        elif sort_by:
             sort_by_variable = self.sort_by_orders_conversion_dictionary[sort_by]
             self.orders_sort_value.set(sort_by)
             self.orders = self.select_db.\
@@ -128,6 +179,8 @@ class OrdersView(tk.Frame):
                                           sort_by_variable,
                                           no_archive="o.archived")
         elif search_by:
+            self.search_by_active_term = search_by
+            search_by_field = self.sort_by_orders_conversion_dictionary[search_by_variable]
             self.orders = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
                                           " pt.cost, u.user_name, r.amount, o.units_ordered, o.order_date, o.id",
@@ -140,7 +193,7 @@ class OrdersView(tk.Frame):
                                            ["priceTracking pt", "pt.id", ""]],
                                           "p.name",
                                           no_archive="o.archived",
-                                          search_by=["p.name", '%' + search_by + '%'])
+                                          search_by=[search_by_field, '%' + search_by + '%'])
         else:
             self.orders = self.select_db.\
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
@@ -540,13 +593,19 @@ class OrdersView(tk.Frame):
                 # archive order
                 self.edit_db.archive_entry_in_table_by_id("orders", order_to_receive)
             receive_product_popup.destroy()
-            self.parent.display_orders_view(self.active_user)
+            self.parent.display_orders_view(self.active_user,
+                                            sort_by=self.sort_by,
+                                            search_by=self.search_by_active_term,
+                                            search_by_variable=self.search_by_variable)
 
     def archive_order_and_reload_orders_page(self,
                                              order_to_receive,
                                              receive_product_popup):
         self.edit_db.archive_entry_in_table_by_id("orders", order_to_receive)
         receive_product_popup.destroy()
-        self.parent.display_orders_view(self.active_user)
+        self.parent.display_orders_view(self.active_user,
+                                        sort_by=self.sort_by,
+                                        search_by=self.search_by_active_term,
+                                        search_by_variable=self.search_by_variable)
 
 

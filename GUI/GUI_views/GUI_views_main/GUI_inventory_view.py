@@ -26,32 +26,53 @@ class InventoryView(tk.Frame):
         self.inventory_frame.config(bg=self.formatting.colour_code_1)
         self.inventory_navigation_frame = tk.Frame(self)
         self.inventory_navigation_frame.config(bg=self.formatting.colour_code_2)
-        self.sort_inventory_view_by = ["Staff Member",
-                                       "Product Code",
-                                       "Vendor Name",
-                                       "Product Category",
-                                       "Order Date",
+        self.sort_inventory_view_by = ["INV #",
                                        "Product Name",
-                                       "Cost per Unit"]
+                                       "Product Code",
+                                       "Product Category",
+                                       "Vendor Name",
+                                       "Units",
+                                       "Received Date",
+                                       "Amount Remaining",
+                                       "Location",
+                                       "Last Updated"]
         self.inventory_sort_value = tk.StringVar(self)
-        self.inventory_sort_value.set("Staff Member")
-        self.sort_by_inventory_conversion_dictionary = {"Staff Member": "u.user_name",
-                                                        "Product Code": "p.product_code",
-                                                        "Vendor Name": "v.vendor_name",
-                                                        "Product Category": "c.category_name",
-                                                        "Order Date": "o.order_date",
+        self.inventory_sort_value.set("INV #")
+        self.search_inventory_view_by = ["INV #",
+                                         "Product Name",
+                                         "Product Code",
+                                         "Product Category",
+                                         "Vendor Name",
+                                         "Location"]
+        self.inventory_search_value = tk.StringVar(self)
+        self.inventory_search_value.set("INV #")
+        self.sort_by_inventory_conversion_dictionary = {"INV #": "i.id",
                                                         "Product Name": "p.name",
-                                                        "Cost per Unit": "pt.cost"}
+                                                        "Product Code": "p.product_code",
+                                                        "Product Category": "c.category_name",
+                                                        "Vendor Name": "v.vendor_name",
+                                                        "Units": "p.unit_of_issue",
+                                                        "Received Date": "rc.received_date",
+                                                        "Amount Remaining": "i.full_units_remaining",
+                                                        "Location": "loc.locations_name",
+                                                        "Last Updated": "i.last_updated"
+                                                        }
         self.editInventoryFailLabel = tk.Label()
         self.sub_locations_menu = ""
         self.sub_locations_value = ""
+        self.search_by_active_term = ""
+        self.sort_by = ""
+        self.search_by_variable = ""
 
-    def inventory_view(self, user, sort_by=False, search_by=False):
+    def inventory_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
+        self.sort_by = sort_by
+        self.search_by_active_term = search_by
+        self.search_by_variable = search_by_variable
         self.active_user = user
-        self.create_inventory_view(sort_by, search_by)
+        self.create_inventory_view(sort_by, search_by, search_by_variable)
 
-    def create_inventory_view(self, sort_by=False, search_by=False):
-        self.get_active_inventory_from_database(sort_by, search_by)
+    def create_inventory_view(self, sort_by=False, search_by=False, search_by_variable=False):
+        self.get_active_inventory_from_database(sort_by, search_by, search_by_variable)
         self.make_scrollable_inventory_header_labels()
         self.populate_scrollable_inventory_list()
         self.create_scrollable_inventory_view()
@@ -59,8 +80,33 @@ class InventoryView(tk.Frame):
         self.inventory_navigation_frame.grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
         self.inventory_scrollable_container.grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
 
-    def get_active_inventory_from_database(self, sort_by=None, search_by=None):
-        if sort_by:
+    def get_active_inventory_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
+        if sort_by and search_by:
+            sort_by_variable = self.sort_by_inventory_conversion_dictionary[sort_by]
+            self.inventory_sort_value.set(sort_by)
+            search_by_term = self.sort_by_inventory_conversion_dictionary[search_by_variable]
+            self.inventory_search_value.set(search_by_variable)
+            self.inventory = self.select_db. \
+                left_join_multiple_tables("p.name, p.product_code, c.category_name, v.vendor_name, p.unit_of_issue," +
+                                          " rc.received_date, i.full_units_remaining, i.partial_units_remaining, " +
+                                          " loc.locations_name, subloc.sub_locations_name, i.last_updated, " +
+                                          " u.user_name, rc.expiry_date, rc.model, rc.equipment_SN, rc.lot_number, " +
+                                          " o.order_date, i.comments, i.id",
+                                          [["inventory i", "", "i.received_id"],
+                                           ["received rc", "rc.id", "rc.orders_id"],
+                                           ["orders o", "o.id", "o.requests_id"],
+                                           ["requests r", "r.id", "r.users_id"],
+                                           ["users u", "u.id", "r.products_id"],
+                                           ["products p", "p.id", "p.vendors_id"],
+                                           ["vendors v", "v.id", "p.categories_id"],
+                                           ["categories c", "c.id", "r.price_id"],
+                                           ["priceTracking pt", "pt.id", "i.location_id"],
+                                           ["inventoryLocations loc", "loc.id", "i.sub_location_id"],
+                                           ["inventorySubLocations subloc", "subloc.id", ""]],
+                                          sort_by_variable,
+                                          no_archive="i.archived",
+                                          search_by=[search_by_term, '%' + search_by + '%'])
+        elif sort_by:
             sort_by_variable = self.sort_by_inventory_conversion_dictionary[sort_by]
             self.inventory_sort_value.set(sort_by)
             self.inventory = self.select_db. \
@@ -83,6 +129,8 @@ class InventoryView(tk.Frame):
                                           sort_by_variable,
                                           no_archive="i.archived")
         elif search_by:
+            search_by_term = self.sort_by_inventory_conversion_dictionary[search_by_variable]
+            self.inventory_search_value.set(search_by_variable)
             self.inventory = self.select_db. \
                 left_join_multiple_tables("p.name, p.product_code, c.category_name, v.vendor_name, p.unit_of_issue," +
                                           " rc.received_date, i.full_units_remaining, i.partial_units_remaining, " +
@@ -102,7 +150,7 @@ class InventoryView(tk.Frame):
                                            ["inventorySubLocations subloc", "subloc.id", ""]],
                                           "p.name",
                                           no_archive="i.archived",
-                                          search_by=["p.name", '%' + search_by + '%'])
+                                          search_by=[search_by_term, '%' + search_by + '%'])
         else:
             self.inventory = self.select_db. \
                 left_join_multiple_tables("p.name, p.product_code, c.category_name, v.vendor_name, p.unit_of_issue," +
@@ -256,6 +304,7 @@ class InventoryView(tk.Frame):
             self.inventory_canvas_length += 50
 
     def create_inventory_navigation_frame(self):
+        inventory_search_entry = tk.Entry(self.inventory_navigation_frame)
         tk.Label(self.inventory_navigation_frame,
                  text="Lab Inventory",
                  font=self.formatting.homepage_window_select_button_font,
@@ -275,32 +324,42 @@ class InventoryView(tk.Frame):
         sort_by_button = tk.Button(self.inventory_navigation_frame,
                                    text="Sort",
                                    font=self.formatting.medium_step_font,
-                                   command=lambda: self.parent.display_received_view(
+                                   command=lambda: self.parent.display_inventory_view(
                                        self.active_user,
-                                       self.inventory_sort_value.get())).grid(
+                                       sort_by=self.inventory_sort_value.get(),
+                                       search_by=self.search_by_active_term,
+                                       search_by_variable=self.search_by_variable)).grid(
             row=0, column=3, sticky=tk.W, padx=10, pady=5
         )
+        # searching tk widgets
+        type_of_search_menu = tk.OptionMenu(self.inventory_navigation_frame,
+                                            self.inventory_search_value,
+                                            *self.search_inventory_view_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
         tk.Label(self.inventory_navigation_frame,
                  text="Search:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=4, sticky=tk.W, pady=5)
-        orders_search_entry = tk.Entry(self.inventory_navigation_frame)
-        orders_search_entry.grid(row=0, column=5, sticky=tk.W, pady=5)
+        inventory_search_entry.grid(row=0, column=5, sticky=tk.W, pady=5)
+        type_of_search_menu.grid(row=0, column=6, sticky=tk.W, pady=5)
         search_by_button = tk.Button(self.inventory_navigation_frame,
-                                     text="Search Name",
+                                     text="Search",
                                      font=self.formatting.medium_step_font,
-                                     command=lambda: self.parent.display_received_view(
-                                       self.active_user,
-                                       search_by=orders_search_entry.get())).grid(
-            row=0, column=6, sticky=tk.W, padx=10, pady=5
+                                     command=lambda: self.parent.display_inventory_view(
+                                         self.active_user,
+                                         sort_by=self.sort_by,
+                                         search_by=inventory_search_entry.get(),
+                                         search_by_variable=self.inventory_search_value.get())).grid(
+            row=0, column=7, sticky=tk.W, padx=10, pady=5
         )
         tk.Button(self.inventory_navigation_frame,
                   text="All",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.parent.display_received_view(
+                  command=lambda: self.parent.display_inventory_view(
                       self.active_user)).grid(
-            row=0, column=7, sticky=tk.W, padx=10, pady=5
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
 
     def create_scrollable_inventory_view(self):
@@ -706,7 +765,10 @@ class InventoryView(tk.Frame):
                                                              received_id)
             received_popup_window.destroy()
             edit_popup_window.destroy()
-            self.parent.display_received_view(self.active_user)
+            self.parent.display_inventory_view(self.active_user,
+                                               sort_by=self.sort_by,
+                                               search_by=self.search_by_active_term,
+                                               search_by_variable=self.search_by_variable)
         else:
             self.editInventoryFailLabel.destroy()
             self.editInventoryFailLabel = tk.Label(edit_popup_window,
@@ -843,4 +905,7 @@ class InventoryView(tk.Frame):
         inventory_popup_window.destroy()
         self.edit_db.archive_entry_in_table_by_id("received",
                                                   received_id)
-        self.parent.display_received_view(self.active_user)
+        self.parent.display_inventory_view(self.active_user,
+                                           sort_by=self.sort_by,
+                                           search_by=self.search_by_active_term,
+                                           search_by_variable=self.search_by_variable)
