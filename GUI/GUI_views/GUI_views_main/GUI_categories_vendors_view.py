@@ -33,17 +33,25 @@ class CategoriesVendorsView(tk.Frame):
         self.categories_navigation_frame.config(bg=self.formatting.colour_code_2)
         self.categories_canvas_length = 0
         self.vendors_canvas_length = 0
+        self.vendor_search = ""
+        self.category_search = ""
 
     # MAIN METHODS
 
-    def categories_and_vendors_view(self, user, vendor_search=False):
+    def categories_and_vendors_view(self, user, vendor_search=None, category_search=None):
+        self.vendor_search = vendor_search
+        self.category_search = category_search
         self.active_user = user
+        self.create_vendors_list(vendor_search)
+        self.create_categories_list(category_search)
         self.create_vendors_navigation_frame()
         self.create_categories_navigation_frame()
-        self.create_vendors_list(vendor_search)
-        self.create_categories_list()
 
     def create_vendors_navigation_frame(self):
+        vendor_search_entry = tk.Entry(self.vendors_navigation_frame)
+        # if there is an active search term, inserts it into entry box.
+        if self.vendor_search:
+            vendor_search_entry.insert(0, self.vendor_search)
         tk.Label(self.vendors_navigation_frame,
                  text="Vendors",
                  font=self.formatting.homepage_window_select_button_font,
@@ -72,22 +80,29 @@ class CategoriesVendorsView(tk.Frame):
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, padx=5, pady=5)
-        vendor_search_entry = tk.Entry(self.vendors_navigation_frame)
         vendor_search_entry.grid(row=0, column=3, sticky=tk.W, pady=5)
         tk.Button(self.vendors_navigation_frame,
                   text="Search",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.parent.display_categories_and_vendors_view(self.active_user,
-                                                                                  vendor_search_entry.get())).grid(
+                  command=lambda: self.parent.display_categories_and_vendors_view(
+                      self.active_user,
+                      vendor_search=vendor_search_entry.get(),
+                      category_search=self.category_search)).grid(
             row=0, column=4, sticky=tk.W, padx=5, pady=5)
         tk.Button(self.vendors_navigation_frame,
                   text="All",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.parent.display_categories_and_vendors_view(self.active_user)).grid(
+                  command=lambda: self.parent.display_categories_and_vendors_view(
+                      self.active_user,
+                      category_search=self.category_search)).grid(
             row=0, column=5, sticky=tk.W, padx=5, pady=5)
         self.vendors_navigation_frame.grid(row=0, column=0, sticky=tk.W, pady=5)
 
     def create_categories_navigation_frame(self):
+        categories_search_entry = tk.Entry(self.categories_navigation_frame)
+        # if there is an active search term, inserts it into entry box.
+        if self.category_search:
+            categories_search_entry.insert(0, self.category_search)
         tk.Label(self.categories_navigation_frame,
                  text="Categories",
                  font=self.formatting.homepage_window_select_button_font,
@@ -112,6 +127,27 @@ class CategoriesVendorsView(tk.Frame):
                 sticky=tk.W,
                 padx=10,
                 pady=5)
+        tk.Label(self.categories_navigation_frame,
+                 text="Search: ",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(row=0, column=2, sticky=tk.W, padx=5, pady=5)
+        categories_search_entry.grid(row=0, column=3, sticky=tk.W, pady=5)
+        tk.Button(self.categories_navigation_frame,
+                  text="Search",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_categories_and_vendors_view(
+                      self.active_user,
+                      vendor_search=self.vendor_search,
+                      category_search=categories_search_entry.get())).grid(
+            row=0, column=4, sticky=tk.W, padx=5, pady=5)
+        tk.Button(self.categories_navigation_frame,
+                  text="All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_categories_and_vendors_view(
+                      self.active_user,
+                      vendor_search=self.vendor_search)).grid(
+            row=0, column=5, sticky=tk.W, padx=5, pady=5)
         self.categories_navigation_frame.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
 
     def create_vendors_list(self, vendor_search=False):
@@ -121,8 +157,8 @@ class CategoriesVendorsView(tk.Frame):
         self.vendors_list_scrollable_container.grid(row=1, column=0, sticky=tk.W, pady=5)
         self.vendors_navigation_frame.lift()
 
-    def create_categories_list(self):
-        self.get_categories_list_from_database()
+    def create_categories_list(self, categories_search=False):
+        self.get_categories_list_from_database(categories_search)
         self.populate_scrollable_categories_list()
         self.create_scrollable_categories_list()
         self.categories_list_scrollable_container.grid(row=1, column=1, sticky=tk.W, padx=10, pady=5)
@@ -227,18 +263,26 @@ class CategoriesVendorsView(tk.Frame):
                           text="View Notes",
                           font=self.formatting.medium_step_font,
                           command=lambda item=item: self.updated_vendor_popup(item)).grid(row=row_counter,
-                                                                                              column=2,
-                                                                                              sticky=tk.W,
-                                                                                              padx=10,
-                                                                                              pady=5)
+                                                                                          column=2,
+                                                                                          sticky=tk.W,
+                                                                                          padx=10,
+                                                                                          pady=5)
             self.vendors_canvas_length += 50
             row_counter += 1
             even_odd += 1
 
 # SHOPPING CART METHODS
 
-    def get_categories_list_from_database(self):
+    def get_categories_list_from_database(self, categories_search=None):
         self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True)
+        if categories_search:
+            self.categories_list = self.select_db.select_all_from_table_where_one_field_like(
+                "categories",
+                "category_name",
+                '%' + categories_search + '%',
+                no_archive=True)
+        else:
+            self.categories_list = self.select_db.select_all_from_table("categories", no_archived=True)
 
     def populate_scrollable_categories_list(self):
         row_counter = 0
@@ -823,7 +867,10 @@ class CategoriesVendorsView(tk.Frame):
         self.edit_db.archive_entry_in_table_by_id("sub_categories", subcategory_to_archive)
         edit_subcategories_popup.destroy()
         vendor_or_category_popup.destroy()
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
 
     def check_for_blank_sub_category(self,
                                      current_category_record_id,
@@ -868,7 +915,10 @@ class CategoriesVendorsView(tk.Frame):
             self.add_delete_db.new_sub_categories_record(values)
         edit_subcategories_popup.destroy()
         vendor_or_category_popup.destroy()
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
 
     def check_for_blank_new_vendor_or_category(self,
                                                table_to_add_to,
@@ -914,7 +964,10 @@ class CategoriesVendorsView(tk.Frame):
             else:
                 self.add_delete_db.new_categories_record(values)
         add_new_window.destroy()
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
 
     def commit_edit_query_close_edit_popup_and_reload(self,
                                                       table_to_edit,
@@ -940,7 +993,10 @@ class CategoriesVendorsView(tk.Frame):
                                                          vendor_or_category[0])
         top_level_window.destroy()
         category_vendor_window.destroy()
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
 
     def archive_vendor_popup(self, vendor_to_archive, table_to_access):
         are_you_sure_logout_popup = tk.Toplevel()
@@ -967,13 +1023,22 @@ class CategoriesVendorsView(tk.Frame):
 
     def destroy_popup_archive_product_and_reload(self, vendor_to_archive, top_level_window, table_to_access):
         self.edit_db.archive_entry_in_table_by_id(table_to_access, vendor_to_archive[0])
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
         top_level_window.destroy()
 
     def approve_vendor_request_and_reload_page(self, record_to_approve):
         self.edit_db.edit_one_record_one_field_one_table("vendors", "approved", "1", record_to_approve[0])
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)
 
     def approve_category_request_and_reload_page(self, record_to_approve):
         self.edit_db.edit_one_record_one_field_one_table("categories", "approved", "1", record_to_approve[0])
-        self.parent.display_categories_and_vendors_view(self.active_user)
+        self.parent.display_categories_and_vendors_view(
+            self.active_user,
+            vendor_search=self.vendor_search,
+            category_search=self.category_search)

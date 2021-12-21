@@ -36,7 +36,8 @@ class ShoppingCartView(tk.Frame):
                                      "Product Code",
                                      "Vendor Name",
                                      "Product Category",
-                                     "Product Sub-Category"]
+                                     "Product Sub-Category",
+                                     "Units"]
         self.product_list_sort_value = tk.StringVar(self)
         self.product_list_sort_value.set("Product Name")
         self.product_list_search_by = ["Product Name",
@@ -44,15 +45,15 @@ class ShoppingCartView(tk.Frame):
                                        "Vendor Name",
                                        "Product Category",
                                        "Product Sub-Category",
-                                       "Approved Status"]
+                                       "Units"]
         self.product_list_search_value = tk.StringVar(self)
         self.product_list_search_value.set("Product Name")
         self.sort_by_shopping_cart_conversion_dictionary = {"Product Code": "p.product_code",
                                                             "Vendor Name": "v.vendor_name",
                                                             "Product Category": "c.category_name",
-                                                            "Product Sub-Category":
-                                                                "c.category_name, sc.sub_category_name",
-                                                            "Product Name": "p.name"}
+                                                            "Product Sub-Category": "sc.sub_category_name",
+                                                            "Product Name": "p.name",
+                                                            "Units": "p.unit_of_issue"}
         self.search_by_active_term = ""
 
     # MAIN METHODS
@@ -62,6 +63,7 @@ class ShoppingCartView(tk.Frame):
                            product_sort_by=False,
                            product_search_by=False,
                            product_search_by_variable=False):
+        self.search_by_active_term = product_search_by
         self.active_user = user
         self.create_products_list(product_sort_by, product_search_by, product_search_by_variable)
         self.create_shopping_cart()
@@ -72,8 +74,8 @@ class ShoppingCartView(tk.Frame):
         self.make_scrollable_products_list_header_labels()
         self.populate_scrollable_products_list()
         self.create_scrollable_products_list()
-        self.products_list_navigation_frame.grid(sticky=tk.W, padx=10, pady=5)
-        self.products_list_scrollable_container.grid(sticky=tk.W, padx=10, pady=5)
+        self.products_list_navigation_frame.grid(row=0, column=0, sticky=tk.W, pady=10)
+        self.products_list_scrollable_container.grid(row=1, column=0, sticky=tk.W)
 
     def create_shopping_cart(self):
         self.get_active_user_shopping_cart_from_database()
@@ -81,14 +83,15 @@ class ShoppingCartView(tk.Frame):
         self.populate_scrollable_shopping_cart()
         self.create_scrollable_shopping_cart()
         self.create_shopping_cart_navigation_frame()
-        self.shopping_cart_navigation_frame.grid(sticky=tk.W, padx=10, pady=5)
-        self.shopping_cart_scrollable_container.grid(sticky=tk.W, padx=10, pady=5)
+        self.shopping_cart_navigation_frame.grid(row=2, column=0, sticky=tk.W, pady=10)
+        self.shopping_cart_scrollable_container.grid(row=3, column=0, sticky=tk.W)
 
     # PRODUCTS LIST METHODS
 
     def create_products_list_navigation_frame(self):
         product_search_entry = tk.Entry(self.products_list_navigation_frame)
-        product_search_entry.insert(0, self.search_by_active_term)
+        if self.search_by_active_term:
+            product_search_entry.insert(0, self.search_by_active_term)
         tk.Label(self.products_list_navigation_frame,
                  text="Products List",
                  font=self.formatting.homepage_window_select_button_font,

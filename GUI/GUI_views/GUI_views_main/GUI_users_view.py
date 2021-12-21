@@ -25,21 +25,38 @@ class UsersView(tk.Frame):
         self.users_list_frame.config(bg=self.formatting.colour_code_1)
         self.users_list_canvas_length = 0
         self.users_list = ()
+        # list to hold options to sort by
+        self.users_list_view_by = ["User Name",
+                                   "Credential Level"]
+        self.users_list_sort_value = tk.StringVar(self)
+        self.users_list_sort_value.set("User Name")
+        # list to hold options to search by
+        self.users_list_search_by = ["User Name",
+                                     "Credential Level"]
+        self.users_list_search_value = tk.StringVar(self)
+        self.users_list_search_value.set("User Name")
+        self.search_by_active_term = ""
+        # dictionary that converts readable search/sort options into SQL field names
+        self.sort_by_users_conversion_dictionary = {"User Name": "u.user_name",
+                                                    "Credential Level": "cr.credential_level"}
 
-    def users_view(self, user):
+    def users_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
         self.active_user = user
-        self.create_users_list()
+        self.create_users_list(sort_by=sort_by, search_by=search_by, search_by_variable=search_by_variable)
 
-    def create_users_list(self):
+    def create_users_list(self, sort_by=False, search_by=False, search_by_variable=False):
+        self.get_users_list_from_database(sort_by=sort_by, search_by=search_by, search_by_variable=search_by_variable)
         self.create_users_list_navigation_frame()
-        self.get_users_list_from_database()
         self.make_scrollable_users_list_header_labels()
-        self.populate_scrollable_users_list()
+        self.populate_scrollable_users_list(sort_by=sort_by, search_by=search_by, search_by_variable=search_by_variable)
         self.create_scrollable_users_list()
         self.users_list_navigation_frame.grid(sticky=tk.W, pady=10)
         self.users_list_scrollable_container.grid()
 
     def create_users_list_navigation_frame(self):
+        users_search_entry = tk.Entry(self.users_list_navigation_frame)
+        # if there is an active search term, inserts it into entry box.
+        users_search_entry.insert(0, self.search_by_active_term)
         tk.Label(self.users_list_navigation_frame,
                  text="Users List",
                  font=self.formatting.homepage_window_select_button_font,
@@ -53,15 +70,125 @@ class UsersView(tk.Frame):
                                                                sticky=tk.W,
                                                                padx=10,
                                                                pady=5)
+        # sorting tk widgets
+        type_of_sort_menu = tk.OptionMenu(self.users_list_navigation_frame,
+                                          self.users_list_sort_value,
+                                          *self.users_list_view_by)
+        type_of_sort_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_sort_menu.config(font=self.formatting.medium_step_font)
+        tk.Label(self.users_list_navigation_frame,
+                 text="Sort:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(
+            row=0,
+            column=2,
+            sticky=tk.W,
+            pady=5)
+        type_of_sort_menu.grid(row=0, column=3, sticky=tk.W, pady=5)
+        tk.Button(self.users_list_navigation_frame,
+                  text="Sort",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_users_view(
+                      self.active_user,
+                      sort_by=self.users_list_sort_value.get(),
+                      search_by=users_search_entry.get(),
+                      search_by_variable=self.users_list_search_value.get())).grid(
+            row=0,
+            column=4,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
+        # searching tk widgets
+        type_of_search_menu = tk.OptionMenu(self.users_list_navigation_frame,
+                                            self.users_list_search_value,
+                                            *self.users_list_search_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
+        tk.Label(self.users_list_navigation_frame,
+                 text="Search:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_2,
+                 fg=self.formatting.colour_code_1).grid(
+            row=0,
+            column=5,
+            sticky=tk.W,
+            pady=5)
+        users_search_entry.grid(row=0, column=6, sticky=tk.W, pady=5)
+        type_of_search_menu.grid(row=0, column=7, sticky=tk.W, pady=5)
+        tk.Button(self.users_list_navigation_frame,
+                  text="Search",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_users_view(
+                      self.active_user,
+                      search_by=users_search_entry.get(),
+                      search_by_variable=self.users_list_search_value.get())).grid(
+            row=0,
+            column=8,
+            sticky=tk.W,
+            padx=10,
+            pady=5
+        )
+        # reloads page to reset sort and search filters
+        tk.Button(self.users_list_navigation_frame,
+                  text="Clear All",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.parent.display_users_view(
+                      self.active_user)).grid(
+            row=0,
+            column=9,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
-    def get_users_list_from_database(self):
-        self.users_list = self.select_db.left_join_multiple_tables(
-            "u.id, u.user_name, cr.credential_level, u.user_password, u.comments",
-            [["users u", "", "u.credentials_id"],
-             ["credentials cr", "cr.id", ""]],
-            "u.user_name",
-            no_archive="u.archived"
-            )
+    def get_users_list_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
+        if sort_by and search_by:
+            # gets the SQL field names needed to write query for the sorting and searching fields
+            sort_by_variable = self.sort_by_users_conversion_dictionary[sort_by]
+            search_by_field = self.sort_by_users_conversion_dictionary[search_by_variable]
+            # sets the active search by term so term displayed in navigation frame on page loading
+            self.search_by_active_term = search_by
+            # sets the active sort and search fields so they are displayed in navigation frame on page loading
+            self.users_list_sort_value.set(sort_by)
+            self.users_list_search_value.set(search_by_variable)
+            self.users_list = self.select_db.left_join_multiple_tables(
+                "u.id, u.user_name, cr.credential_level, u.user_password, u.comments",
+                [["users u", "", "u.credentials_id"],
+                 ["credentials cr", "cr.id", ""]],
+                sort_by_variable,
+                search_by=[search_by_field, '%' + search_by + '%'],
+                no_archive="u.archived"
+                )
+        elif sort_by:
+            sort_by_variable = self.sort_by_users_conversion_dictionary[sort_by]
+            self.users_list_sort_value.set(sort_by)
+            self.users_list = self.select_db.left_join_multiple_tables(
+                "u.id, u.user_name, cr.credential_level, u.user_password, u.comments",
+                [["users u", "", "u.credentials_id"],
+                 ["credentials cr", "cr.id", ""]],
+                sort_by_variable,
+                no_archive="u.archived"
+                )
+        elif search_by:
+            search_by_field = self.sort_by_users_conversion_dictionary[search_by_variable]
+            self.search_by_active_term = search_by
+            self.users_list_search_value.set(search_by_variable)
+            self.users_list = self.select_db.left_join_multiple_tables(
+                "u.id, u.user_name, cr.credential_level, u.user_password, u.comments",
+                [["users u", "", "u.credentials_id"],
+                 ["credentials cr", "cr.id", ""]],
+                "u.user_name",
+                search_by=[search_by_field, '%' + search_by + '%'],
+                no_archive="u.archived"
+                )
+        else:
+            self.users_list = self.select_db.left_join_multiple_tables(
+                "u.id, u.user_name, cr.credential_level, u.user_password, u.comments",
+                [["users u", "", "u.credentials_id"],
+                 ["credentials cr", "cr.id", ""]],
+                "u.user_name",
+                no_archive="u.archived"
+                )
 
     def make_scrollable_users_list_header_labels(self):
         tk.Label(self.users_list_frame,
@@ -75,7 +202,7 @@ class UsersView(tk.Frame):
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
 
-    def populate_scrollable_users_list(self):
+    def populate_scrollable_users_list(self, sort_by=False, search_by=False, search_by_variable=False):
         row_counter = 1
         even_odd = 1
         for item in self.users_list:
@@ -96,11 +223,16 @@ class UsersView(tk.Frame):
             tk.Button(self.users_list_frame,
                       text="Open",
                       font=self.formatting.medium_step_font,
-                      command=lambda item=item: self.open_user_popup(item)).grid(row=row_counter,
-                                                                                 column=2,
-                                                                                 sticky=tk.W,
-                                                                                 padx=10,
-                                                                                 pady=5)
+                      command=lambda item=item: self.open_user_popup(
+                          item,
+                          sort_by=sort_by,
+                          search_by=search_by,
+                          search_by_variable=search_by_variable)).grid(
+                row=row_counter,
+                column=2,
+                sticky=tk.W,
+                padx=10,
+                pady=5)
             tk.Button(self.users_list_frame,
                       text="Archive",
                       font=self.formatting.medium_step_font,
@@ -133,7 +265,7 @@ class UsersView(tk.Frame):
                                            window=self.users_list_frame,
                                            anchor="nw")
 
-    def open_user_popup(self, user):
+    def open_user_popup(self, user, sort_by=False, search_by=False, search_by_variable=False):
         open_user_popup = tk.Toplevel()
         open_user_popup.config(bg=self.formatting.colour_code_1)
         open_user_popup.geometry('600x400')
@@ -158,7 +290,12 @@ class UsersView(tk.Frame):
         tk.Button(open_user_popup,
                   text="Edit",
                   font=self.formatting.medium_step_font,
-                  command=lambda user=user: self.edit_name_popup(user, open_user_popup)).grid(
+                  command=lambda user=user: self.edit_name_popup(
+                      user,
+                      open_user_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=1,
             column=2,
             sticky=tk.W,
@@ -179,8 +316,12 @@ class UsersView(tk.Frame):
         tk.Button(open_user_popup,
                   text="Change",
                   font=self.formatting.medium_step_font,
-                  command=lambda user=user: self.change_credential_level_popup(user,
-                                                                               open_user_popup)).grid(
+                  command=lambda user=user: self.change_credential_level_popup(
+                      user,
+                      open_user_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=2,
             column=2,
             sticky=tk.W,
@@ -196,7 +337,12 @@ class UsersView(tk.Frame):
         tk.Button(open_user_popup,
                   text="Edit Notes",
                   font=self.formatting.medium_step_font,
-                  command=lambda user=user: self.edit_notes_popup(user, open_user_popup)).grid(
+                  command=lambda user=user: self.edit_notes_popup(
+                      user,
+                      open_user_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=4,
             column=0,
             sticky=tk.W,
@@ -205,7 +351,12 @@ class UsersView(tk.Frame):
         tk.Button(open_user_popup,
                   text="Reset Password",
                   font=self.formatting.medium_step_font,
-                  command=lambda user=user: self.reset_password_popup(user, open_user_popup)).grid(
+                  command=lambda user=user: self.reset_password_popup(
+                      user,
+                      open_user_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=4,
             column=1,
             sticky=tk.W,
@@ -293,7 +444,12 @@ class UsersView(tk.Frame):
                       new_user_popup
                   )).grid(row=7, column=0, sticky=tk.W, padx=10, pady=5)
 
-    def reset_password_popup(self, user, individual_user_popup):
+    def reset_password_popup(self,
+                             user,
+                             individual_user_popup,
+                             sort_by=False,
+                             search_by=False,
+                             search_by_variable=False):
         are_you_sure_logout_popup = tk.Toplevel()
         are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
         are_you_sure_logout_popup.geometry('500x90')
@@ -310,10 +466,13 @@ class UsersView(tk.Frame):
                       user,
                       "user_password",
                       individual_user_popup,
-                      are_you_sure_logout_popup)).grid(
+                      are_you_sure_logout_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=0, column=1, sticky=tk.W, padx=10, pady=10)
 
-    def edit_notes_popup(self, user, individual_user_popup):
+    def edit_notes_popup(self, user, individual_user_popup, sort_by=False, search_by=False, search_by_variable=False):
         edit_notes_popup = tk.Toplevel()
         edit_notes_popup.config(bg=self.formatting.colour_code_1)
         edit_notes_popup.geometry('500x160')
@@ -327,14 +486,18 @@ class UsersView(tk.Frame):
         tk.Button(edit_notes_popup,
                   text="Commit Changes",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(user_notes.get("1.0", tk.END),
-                                                                                     user,
-                                                                                     "comments",
-                                                                                     individual_user_popup,
-                                                                                     edit_notes_popup)).grid(
+                  command=lambda: self.commit_edit_query_close_edit_popup_and_reload(
+                      user_notes.get("1.0", tk.END),
+                      user,
+                      "comments",
+                      individual_user_popup,
+                      edit_notes_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=1, column=0, sticky=tk.W, padx=10, pady=10)
 
-    def edit_name_popup(self, user, individual_user_popup):
+    def edit_name_popup(self, user, individual_user_popup, sort_by=False, search_by=False, search_by_variable=False):
         edit_name_popup = tk.Toplevel()
         edit_name_popup.config(bg=self.formatting.colour_code_1)
         edit_name_popup.geometry('500x90')
@@ -345,13 +508,22 @@ class UsersView(tk.Frame):
         tk.Button(edit_name_popup,
                   text="Commit Changes",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.check_for_blank_name_edit(edit_name_entry.get(),
-                                                                 user,
-                                                                 individual_user_popup,
-                                                                 edit_name_popup)).grid(
+                  command=lambda: self.check_for_blank_name_edit(
+                      edit_name_entry.get(),
+                      user,
+                      individual_user_popup,
+                      edit_name_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable)).grid(
             row=0, column=1, sticky=tk.W, padx=10, pady=10)
 
-    def change_credential_level_popup(self, user, individual_user_popup):
+    def change_credential_level_popup(self,
+                                      user,
+                                      individual_user_popup,
+                                      sort_by=False,
+                                      search_by=False,
+                                      search_by_variable=False):
         credentials = self.select_db.select_all_from_table("credentials")
         change_credentials_popup = tk.Toplevel()
         change_credentials_popup.config(bg=self.formatting.colour_code_1)
@@ -383,7 +555,10 @@ class UsersView(tk.Frame):
                       user,
                       "credentials_id",
                       individual_user_popup,
-                      change_credentials_popup
+                      change_credentials_popup,
+                      sort_by=sort_by,
+                      search_by=search_by,
+                      search_by_variable=search_by_variable
                   )).grid(
                 row=1, column=1, columnspan=2, sticky=tk.W, padx=10, pady=5)
 
@@ -393,7 +568,10 @@ class UsersView(tk.Frame):
                                                                 comments,
                                                                 password_entry,
                                                                 password_check_entry,
-                                                                new_user_popup):
+                                                                new_user_popup,
+                                                                sort_by=False,
+                                                                search_by=False,
+                                                                search_by_variable=False):
         password_check = False
         if password_entry == password_check_entry:
             password_check = True
@@ -406,7 +584,11 @@ class UsersView(tk.Frame):
                                                     password_entry,
                                                     comments))
                 new_user_popup.destroy()
-                self.parent.display_users_view(self.active_user)
+                self.parent.display_users_view(
+                    self.active_user,
+                    sort_by=sort_by,
+                    search_by=search_by,
+                    search_by_variable=search_by_variable)
             else:
                 # passwords match but name is blank
                 tk.Label(new_user_popup,
@@ -428,15 +610,21 @@ class UsersView(tk.Frame):
                                   name_to_edit,
                                   user,
                                   top_level_window,
-                                  edit_name_window):
+                                  edit_name_window,
+                                  sort_by=False,
+                                  search_by=False,
+                                  search_by_variable=False):
         check = self.error_handling.checkBlankEntry(name_to_edit)
         if check:
-            self.commit_edit_query_close_edit_popup_and_reload(name_to_edit,
-                                                               user,
-                                                               "user_name",
-                                                               top_level_window,
-                                                               edit_name_window
-                                                               )
+            self.commit_edit_query_close_edit_popup_and_reload(
+                name_to_edit,
+                 user,
+                 "user_name",
+                 top_level_window,
+                 edit_name_window,
+                 sort_by=sort_by,
+                 search_by=search_by,
+                 search_by_variable=search_by_variable)
         else:
             tk.Label(edit_name_window,
                      text="Name cannot be blank.",
@@ -454,7 +642,10 @@ class UsersView(tk.Frame):
                                                       user_to_edit,
                                                       field_to_edit,
                                                       top_level_window,
-                                                      edit_notes_window):
+                                                      edit_notes_window,
+                                                      sort_by=False,
+                                                      search_by=False,
+                                                      search_by_variable=False):
         try:
             new_value_entry = new_value_entry.get()
         except AttributeError:
@@ -462,4 +653,8 @@ class UsersView(tk.Frame):
         self.edit_db.edit_one_record_one_field_one_table("users", field_to_edit, new_value_entry, user_to_edit[0])
         top_level_window.destroy()
         edit_notes_window.destroy()
-        self.parent.display_users_view(self.active_user)
+        self.parent.display_users_view(
+            self.active_user,
+            sort_by=sort_by,
+            search_by=search_by,
+            search_by_variable=search_by_variable)

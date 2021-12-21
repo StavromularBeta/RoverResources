@@ -26,32 +26,52 @@ class ReceivedView(tk.Frame):
         self.received_frame.config(bg=self.formatting.colour_code_1)
         self.received_navigation_frame = tk.Frame(self)
         self.received_navigation_frame.config(bg=self.formatting.colour_code_2)
-        self.sort_received_view_by = ["Staff Member",
+        self.sort_received_view_by = ["Product Name",
                                       "Product Code",
                                       "Vendor Name",
                                       "Product Category",
-                                      "Order Date",
-                                      "Product Name",
-                                      "Cost per Unit"]
+                                      "Received Date",
+                                      "Units",
+                                      "Cost",
+                                      "Staff Member",
+                                      "Amount Ordered",
+                                      "Amount Received"]
         self.received_sort_value = tk.StringVar(self)
-        self.received_sort_value.set("Staff Member")
+        self.received_sort_value.set("Product Name")
+        self.sort_received_search_by = ["Product Name",
+                                        "Product Code",
+                                        "Vendor Name",
+                                        "Product Category",
+                                        "Staff Member"]
+        self.received_search_value = tk.StringVar(self)
+        self.received_search_value.set("Product Name")
         self.sort_by_received_conversion_dictionary = {"Staff Member": "u.user_name",
                                                        "Product Code": "p.product_code",
                                                        "Vendor Name": "v.vendor_name",
                                                        "Product Category": "c.category_name",
                                                        "Order Date": "o.order_date",
                                                        "Product Name": "p.name",
-                                                       "Cost per Unit": "pt.cost"}
+                                                       "Cost": "pt.cost",
+                                                       "Units": "p.unit_of_issue",
+                                                       "Amount Ordered": "o.units_ordered",
+                                                       "Amount Received": "rc.received_amount"}
         self.editReceivedFailLabel = tk.Label()
         self.sub_locations_menu = ""
         self.sub_locations_value = ""
+        self.sub_locations_dict = {}
+        self.search_by_active_term = ""
+        self.sort_by = ""
+        self.search_by_variable = ""
 
-    def received_view(self, user, sort_by=False, search_by=False):
+    def received_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
+        self.sort_by = sort_by
+        self.search_by_active_term = search_by
+        self.search_by_variable = search_by_variable
         self.active_user = user
-        self.create_received_view(sort_by, search_by)
+        self.create_received_view(sort_by, search_by, search_by_variable)
 
-    def create_received_view(self, sort_by=False, search_by=False):
-        self.get_active_received_from_database(sort_by, search_by)
+    def create_received_view(self, sort_by=False, search_by=False, search_by_variable=False):
+        self.get_active_received_from_database(sort_by, search_by, search_by_variable)
         self.make_scrollable_received_header_labels()
         self.populate_scrollable_received_list()
         self.create_scrollable_received_view()
@@ -59,8 +79,29 @@ class ReceivedView(tk.Frame):
         self.received_navigation_frame.grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
         self.received_scrollable_container.grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
 
-    def get_active_received_from_database(self, sort_by=None, search_by=None):
-        if sort_by:
+    def get_active_received_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
+        if sort_by and search_by:
+            sort_by_variable = self.sort_by_received_conversion_dictionary[sort_by]
+            self.received_sort_value.set(sort_by)
+            search_by_term = self.sort_by_received_conversion_dictionary[search_by_variable]
+            self.received_search_value.set(search_by_variable)
+            self.received = self.select_db. \
+                left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
+                                          " pt.cost, u.user_name, o.units_ordered, rc.received_amount," +
+                                          " rc.received_date, rc.lot_number, rc.expiry_date, rc.model," +
+                                          " rc.equipment_SN, rc.comments, rc.id",
+                                          [["received rc", "", "rc.orders_id"],
+                                           ["orders o", "o.id", "o.requests_id"],
+                                           ["requests r", "r.id", "r.users_id"],
+                                           ["users u", "u.id", "r.products_id"],
+                                           ["products p", "p.id", "p.vendors_id"],
+                                           ["vendors v", "v.id", "p.categories_id"],
+                                           ["categories c", "c.id", "r.price_id"],
+                                           ["priceTracking pt", "pt.id", ""]],
+                                          sort_by_variable,
+                                          no_archive="rc.archived",
+                                          search_by=[search_by_term, '%' + search_by + '%'])
+        elif sort_by:
             sort_by_variable = self.sort_by_received_conversion_dictionary[sort_by]
             self.received_sort_value.set(sort_by)
             self.received = self.select_db. \
@@ -79,6 +120,8 @@ class ReceivedView(tk.Frame):
                                           sort_by_variable,
                                           no_archive="rc.archived")
         elif search_by:
+            search_by_term = self.sort_by_received_conversion_dictionary[search_by_variable]
+            self.received_search_value.set(search_by_variable)
             self.received = self.select_db. \
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
                                           " pt.cost, u.user_name, o.units_ordered, rc.received_amount," +
@@ -94,7 +137,7 @@ class ReceivedView(tk.Frame):
                                            ["priceTracking pt", "pt.id", ""]],
                                           "p.name",
                                           no_archive="rc.archived",
-                                          search_by=["p.name", '%' + search_by + '%'])
+                                          search_by=[search_by_term, '%' + search_by + '%'])
         else:
             self.received = self.select_db. \
                 left_join_multiple_tables("p.name, p.product_code, v.vendor_name, c.category_name, p.unit_of_issue," +
@@ -246,6 +289,9 @@ class ReceivedView(tk.Frame):
             self.received_canvas_length += 50
 
     def create_received_navigation_frame(self):
+        orders_search_entry = tk.Entry(self.received_navigation_frame)
+        if self.search_by_active_term:
+            orders_search_entry.insert(0, self.search_by_active_term)
         tk.Label(self.received_navigation_frame,
                  text="Received Orders",
                  font=self.formatting.homepage_window_select_button_font,
@@ -267,30 +313,40 @@ class ReceivedView(tk.Frame):
                                    font=self.formatting.medium_step_font,
                                    command=lambda: self.parent.display_received_view(
                                        self.active_user,
-                                       self.received_sort_value.get())).grid(
+                                       sort_by=self.received_sort_value.get(),
+                                       search_by=self.search_by_active_term,
+                                       search_by_variable=self.search_by_variable)).grid(
             row=0, column=3, sticky=tk.W, padx=10, pady=5
         )
+        # searching tk widgets
+        type_of_search_menu = tk.OptionMenu(self.received_navigation_frame,
+                                            self.received_search_value,
+                                            *self.sort_received_search_by)
+        type_of_search_menu.config(highlightbackground=self.formatting.colour_code_2)
+        type_of_search_menu.config(font=self.formatting.medium_step_font)
         tk.Label(self.received_navigation_frame,
                  text="Search:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_2,
                  fg=self.formatting.colour_code_1).grid(row=0, column=4, sticky=tk.W, pady=5)
-        orders_search_entry = tk.Entry(self.received_navigation_frame)
         orders_search_entry.grid(row=0, column=5, sticky=tk.W, pady=5)
+        type_of_search_menu.grid(row=0, column=6, sticky=tk.W, padx=10, pady=5)
         search_by_button = tk.Button(self.received_navigation_frame,
-                                     text="Search Name",
+                                     text="Search",
                                      font=self.formatting.medium_step_font,
                                      command=lambda: self.parent.display_received_view(
-                                       self.active_user,
-                                       search_by=orders_search_entry.get())).grid(
-            row=0, column=6, sticky=tk.W, padx=10, pady=5
+                                         self.active_user,
+                                         sort_by=self.sort_by,
+                                         search_by=orders_search_entry.get(),
+                                         search_by_variable=self.received_search_value.get())).grid(
+            row=0, column=7, sticky=tk.W, padx=10, pady=5
         )
         tk.Button(self.received_navigation_frame,
                   text="All",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.parent.display_received_view(
                       self.active_user)).grid(
-            row=0, column=7, sticky=tk.W, padx=10, pady=5
+            row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
 
     def create_scrollable_received_view(self):
@@ -666,7 +722,10 @@ class ReceivedView(tk.Frame):
                                                              received_id)
             received_popup_window.destroy()
             edit_popup_window.destroy()
-            self.parent.display_received_view(self.active_user)
+            self.parent.display_received_view(self.active_user,
+                                              search_by=self.search_by_active_term,
+                                              sort_by=self.sort_by,
+                                              search_by_variable=self.search_by_variable)
         else:
             self.editReceivedFailLabel.destroy()
             self.editReceivedFailLabel = tk.Label(edit_popup_window,
@@ -687,7 +746,6 @@ class ReceivedView(tk.Frame):
         inventory_received_item_popup.geometry('600x200')
         locations_dict = {}
         locations_list = []
-        sub_locations_dict = {}
         sub_locations_list = []
         locations = self.select_db.select_all_from_table("inventoryLocations")
         for item in locations:
@@ -698,7 +756,7 @@ class ReceivedView(tk.Frame):
             "locations_id",
             locations_dict[locations_list[0]],)
         for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
+            self.sub_locations_dict[item[2]] = item[0]
             sub_locations_list.append(item[2])
         locations_value = tk.StringVar(inventory_received_item_popup)
         self.sub_locations_value = tk.StringVar(inventory_received_item_popup)
@@ -749,7 +807,7 @@ class ReceivedView(tk.Frame):
                   command=lambda item=item_to_inventory: self.add_inventory_item_and_reload_page(
                       item,
                       locations_dict[locations_value.get()],
-                      sub_locations_dict[self.sub_locations_value.get()],
+                      self.sub_locations_dict[self.sub_locations_value.get()],
                       "",
                       inventory_received_item_popup)).grid(
             row=4,
@@ -763,7 +821,6 @@ class ReceivedView(tk.Frame):
                                                   new_location,
                                                   inventory_popup):
         self.sub_locations_menu.destroy()
-        sub_locations_dict = {}
         sub_locations_list = []
         self.sub_locations_value = tk.StringVar(inventory_popup)
         sub_locations = self.select_db.select_all_from_table_where_one_field_equals(
@@ -771,7 +828,7 @@ class ReceivedView(tk.Frame):
             "locations_id",
             new_location,)
         for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
+            self.sub_locations_dict[item[2]] = item[0]
             sub_locations_list.append(item[2])
         self.sub_locations_menu = tk.OptionMenu(inventory_popup,
                                                 self.sub_locations_value,
@@ -803,4 +860,7 @@ class ReceivedView(tk.Frame):
         inventory_popup_window.destroy()
         self.edit_db.archive_entry_in_table_by_id("received",
                                                   received_id)
-        self.parent.display_received_view(self.active_user)
+        self.parent.display_received_view(self.active_user,
+                                          search_by=self.search_by_active_term,
+                                          sort_by=self.sort_by,
+                                          search_by_variable=self.search_by_variable)
