@@ -4,6 +4,7 @@ from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
 from GUI.GUI_formatting import GUI_errorHandling as tk_error_handling
+from GUI.GUI_formatting import GUI_data_export as tk_dataExport
 import datetime
 
 
@@ -14,6 +15,7 @@ class InventoryView(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.data_export = tk_dataExport.TkDataExportMethods()
         self.error_handling = tk_error_handling.ErrorHandling()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
@@ -60,9 +62,11 @@ class InventoryView(tk.Frame):
         self.editInventoryFailLabel = tk.Label()
         self.sub_locations_menu = ""
         self.sub_locations_value = ""
+        self.sub_locations_dict = {}
         self.search_by_active_term = ""
         self.sort_by = ""
         self.search_by_variable = ""
+        self.printable_inventory_list = []
 
     def inventory_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
         self.sort_by = sort_by
@@ -223,6 +227,7 @@ class InventoryView(tk.Frame):
         row_counter = 1
         even_odd = 1
         for item in self.inventory:
+            self.printable_inventory_list.append(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
             else:
@@ -299,6 +304,15 @@ class InventoryView(tk.Frame):
                 sticky=tk.W,
                 padx=10,
                 pady=5)
+            if self.active_user[1] == 1:
+                tk.Button(self.inventory_frame,
+                          text="Archive",
+                          font=self.formatting.medium_step_font,
+                          command=lambda item=item: self.archive_inventory_popup(item)).grid(row=row_counter,
+                                                                                             column=11,
+                                                                                             sticky=tk.W,
+                                                                                             padx=10,
+                                                                                             pady=5)
             row_counter += 1
             even_odd += 1
             self.inventory_canvas_length += 50
@@ -361,6 +375,19 @@ class InventoryView(tk.Frame):
                       self.active_user)).grid(
             row=0, column=8, sticky=tk.W, padx=10, pady=5
         )
+        # print view
+        tk.Button(self.inventory_navigation_frame,
+                  text="Print",
+                  font=self.formatting.medium_step_font,
+                  command=lambda : self.data_export.generate_data_export_popup(
+                      self.active_user,
+                      self.printable_inventory_list,
+                      "inventory")).grid(
+            row=0,
+            column=9,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
     def create_scrollable_inventory_view(self):
         inventory_canvas = tk.Canvas(self.inventory_scrollable_container,
@@ -383,185 +410,185 @@ class InventoryView(tk.Frame):
                                        anchor="nw")
 
     def inventory_product_popup(self, inventory_item):
-        receive_product_popup = tk.Toplevel()
-        receive_product_popup.config(bg=self.formatting.colour_code_1)
-        receive_product_popup.geometry('500x800')
-        tk.Label(receive_product_popup,
+        inventory_product_popup = tk.Toplevel()
+        inventory_product_popup.config(bg=self.formatting.colour_code_1)
+        inventory_product_popup.geometry('500x800')
+        tk.Label(inventory_product_popup,
                  text=inventory_item[0] + " (INV-" + str(inventory_item[18]) + ")",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_purple).grid(row=0, column=0, columnspan=6, sticky=tk.W, pady=5, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Product Information",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=1, column=0, columnspan=6, sticky=tk.W, pady=5, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Product Code:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=2, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[1],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=2, column=1, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Vendor:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=3, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[3],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=3, column=1, columnspan=3, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Unit of Issue:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=4, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[4],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=4, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Lot Number:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=5, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[15],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=5, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Serial Number:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=6, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[14],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=6, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Model:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=7, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[13],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=7, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Category:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=8, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[2],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=8, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Timeline",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=9, column=0, columnspan=6, sticky=tk.W, pady=5, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Order Date:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=10, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[16],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=10, column=1, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Receive Date:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=11, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[5],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=11, column=1, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Expiry Date:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=12, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[12],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=12, column=1, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Inventory Information",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=13, column=0, columnspan=6, sticky=tk.W, pady=5, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Full Units Remaining:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=14, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[6],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=14, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Partial Units Remaining:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=15, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[7],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=15, column=1, columnspan=5, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Location:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=16, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[8],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=16, column=1, sticky=tk.W)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Sub-Location:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=17, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[9],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=17, column=1, sticky=tk.W, columnspan=3)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Last Updated by:",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=18, column=0, sticky=tk.W, padx=10)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text=inventory_item[11] + " on " + inventory_item[10],
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=18, column=1, sticky=tk.W, columnspan=5)
-        tk.Label(receive_product_popup,
+        tk.Label(inventory_product_popup,
                  text="Inventory Comments",
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_3).grid(row=19, column=0, columnspan=6, sticky=tk.W, pady=5, padx=10)
-        received_notes = tk.Text(receive_product_popup,
+        received_notes = tk.Text(inventory_product_popup,
                                  height=5,
                                  width=40)
         received_notes.config(bg=self.formatting.colour_code_2)
@@ -569,201 +596,188 @@ class InventoryView(tk.Frame):
         received_notes.insert(tk.END, inventory_item[17])
         received_notes.config(state=tk.DISABLED, wrap="word")
         received_notes.grid(row=20, column=0, columnspan=6, sticky=tk.W, padx=10)
-
-    def edit_received_product_popup(self, received_order, received_order_popup):
-        edit_receive_product_popup = tk.Toplevel()
-        edit_receive_product_popup.config(bg=self.formatting.colour_code_1)
-        edit_receive_product_popup.geometry('500x700')
-        tk.Label(edit_receive_product_popup,
-                 text="Edit Receiving Information",
-                 font=self.formatting.homepage_window_select_button_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=5, padx=10)
-        tk.Label(edit_receive_product_popup,
-                 text="Amount Received",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=1, column=0, sticky=tk.W, padx=10)
-        amount_received_entry = tk.Entry(edit_receive_product_popup)
-        amount_received_entry.grid(row=1, column=1, sticky=tk.W, padx=10)
-        amount_received_entry.insert(tk.END, received_order[8])
-        tk.Label(edit_receive_product_popup,
-                 text="Received Date",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
-        tk.Label(edit_receive_product_popup,
-                 text="Year",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=3, column=0, sticky=tk.W, padx=10)
-        year_entry = tk.Entry(edit_receive_product_popup)
-        year_entry.grid(row=3, column=1, sticky=tk.W, padx=10)
-        year_entry.insert(tk.END, received_order[9].split("-")[0])
-        tk.Label(edit_receive_product_popup,
-                 text="Month",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=4, column=0, sticky=tk.W, padx=10)
-        month_entry = tk.Entry(edit_receive_product_popup)
-        month_entry.grid(row=4, column=1, sticky=tk.W, padx=10)
-        month_entry.insert(tk.END, received_order[9].split("-")[1])
-        tk.Label(edit_receive_product_popup,
-                 text="Day",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=5, column=0, sticky=tk.W, padx=10)
-        day_entry = tk.Entry(edit_receive_product_popup)
-        day_entry.grid(row=5, column=1, sticky=tk.W, padx=10)
-        day_entry.insert(tk.END, received_order[9].split("-")[2])
-        tk.Label(edit_receive_product_popup,
-                 text="Receiving Information (Optional)",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=6, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
-        tk.Label(edit_receive_product_popup,
-                 text="Lot Number",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=7, column=0, sticky=tk.W, padx=10)
-        lot_number_entry = tk.Entry(edit_receive_product_popup)
-        lot_number_entry.grid(row=7, column=1, sticky=tk.W, padx=10)
-        lot_number_entry.insert(tk.END, received_order[10])
-        tk.Label(edit_receive_product_popup,
-                 text="Serial Number",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=8, column=0, sticky=tk.W, padx=10)
-        serial_entry = tk.Entry(edit_receive_product_popup)
-        serial_entry.grid(row=8, column=1, sticky=tk.W, padx=10)
-        serial_entry.insert(tk.END, received_order[13])
-        tk.Label(edit_receive_product_popup,
-                 text="Model",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=9, column=0, sticky=tk.W, padx=10)
-        model_entry = tk.Entry(edit_receive_product_popup)
-        model_entry.grid(row=9, column=1, sticky=tk.W, padx=10)
-        model_entry.insert(tk.END, received_order[12])
-        tk.Label(edit_receive_product_popup,
-                 text="Product Expiry Date",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=10, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
-        tk.Label(edit_receive_product_popup,
-                 text="Year",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=11, column=0, sticky=tk.W, padx=10)
-        expiry_year_entry = tk.Entry(edit_receive_product_popup)
-        expiry_year_entry.grid(row=11, column=1, sticky=tk.W, padx=10)
-        expiry_year_entry.insert(tk.END, received_order[11].split("-")[0])
-        tk.Label(edit_receive_product_popup,
-                 text="Month",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=12, column=0, sticky=tk.W, padx=10)
-        expiry_month_entry = tk.Entry(edit_receive_product_popup)
-        expiry_month_entry.grid(row=12, column=1, sticky=tk.W, padx=10)
-        expiry_month_entry.insert(tk.END, received_order[11].split("-")[1])
-        tk.Label(edit_receive_product_popup,
-                 text="Day",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=13, column=0, sticky=tk.W, padx=10)
-        expiry_day_entry = tk.Entry(edit_receive_product_popup)
-        expiry_day_entry.grid(row=13, column=1, sticky=tk.W, padx=10)
-        expiry_day_entry.insert(tk.END, received_order[11].split("-")[2])
-        tk.Label(edit_receive_product_popup,
-                 text="Comments",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=14, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
-        received_notes = tk.Text(edit_receive_product_popup,
-                                 height=5,
-                                 width=40)
-        received_notes.config(bg=self.formatting.colour_code_2)
-        received_notes.config(state=tk.NORMAL)
-        received_notes.insert(tk.END, received_order[14])
-        received_notes.grid(row=15, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
-        tk.Button(edit_receive_product_popup,
-                  text="Commit Changes",
+        tk.Button(inventory_product_popup,
+                  text="Edit Inventory Information",
                   font=self.formatting.medium_step_font,
-                  command=lambda item=received_order: self.check_edits_and_commit_changes_to_received_product(
-                      item[15],
-                      year_entry.get(),
-                      month_entry.get(),
-                      day_entry.get(),
-                      expiry_year_entry.get(),
-                      expiry_month_entry.get(),
-                      expiry_day_entry.get(),
-                      amount_received_entry.get(),
-                      lot_number_entry.get(),
-                      model_entry.get(),
-                      serial_entry.get(),
-                      received_notes.get("1.0", tk.END),
-                      edit_receive_product_popup,
-                      received_order_popup)).grid(
-            row=16,
+                  command=lambda item=inventory_item: self.edit_inventoried_product_popup(
+                      item,
+                      inventory_product_popup
+                  )).grid(
+            row=21,
             column=0,
             columnspan=3,
             sticky=tk.W,
             padx=10,
             pady=5)
 
-    def check_edits_and_commit_changes_to_received_product(self,
-                                                           received_id,
-                                                           received_year,
-                                                           received_month,
-                                                           received_day,
-                                                           expiry_year,
-                                                           expiry_month,
-                                                           expiry_day,
-                                                           received_amount,
-                                                           lot_number,
-                                                           model,
-                                                           serial_number,
-                                                           comments,
-                                                           edit_popup_window,
-                                                           received_popup_window):
-        int_error_check = self.error_handling.checkIfInt(received_amount)
-        date_error_check = self.error_handling.checkYearMonthDayFormat(received_year, received_month, received_day)
-        exp_date_error_check = self.error_handling.checkYearMonthDayFormat(expiry_year,
-                                                                           expiry_month,
-                                                                           expiry_day,
-                                                                           expiry=True)
-        if int_error_check and date_error_check and exp_date_error_check:
-            expiry_date = datetime.date(int(expiry_year), int(expiry_month), int(expiry_day))
-            received_date = datetime.date(int(received_year), int(received_month), int(received_day))
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "expiry_date",
-                                                             expiry_date,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "received_date",
-                                                             received_date,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "received_amount",
-                                                             received_amount,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "lot_number",
-                                                             lot_number,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "model",
-                                                             model,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
-                                                             "equipment_SN",
-                                                             serial_number,
-                                                             received_id)
-            self.edit_db.edit_one_record_one_field_one_table("received",
+    def edit_inventoried_product_popup(self, inventory_item, inventory_item_popup):
+        # Popup Info
+        edit_inventory_product_popup = tk.Toplevel()
+        edit_inventory_product_popup.config(bg=self.formatting.colour_code_1)
+        edit_inventory_product_popup.geometry('500x700')
+        # locations and sub-locations
+        locations_dict = {}
+        locations_list = []
+        sub_locations_list = []
+        locations = self.select_db.select_all_from_table("inventoryLocations")
+        for item in locations:
+            locations_dict[item[1]] = item[0]
+            locations_list.append(item[1])
+        sub_locations = self.select_db.select_all_from_table_where_one_field_equals(
+            "inventorySubLocations",
+            "locations_id",
+            locations_dict[locations_list[0]],)
+        for item in sub_locations:
+            self.sub_locations_dict[item[2]] = item[0]
+            sub_locations_list.append(item[2])
+        locations_value = tk.StringVar(edit_inventory_product_popup)
+        self.sub_locations_value = tk.StringVar(edit_inventory_product_popup)
+        locations_menu = tk.OptionMenu(edit_inventory_product_popup,
+                                       locations_value,
+                                       *locations_list,)
+        locations_menu.config(highlightbackground=self.formatting.colour_code_1)
+        locations_menu.config(font=self.formatting.medium_step_font)
+        self.sub_locations_menu = tk.OptionMenu(edit_inventory_product_popup,
+                                                self.sub_locations_value,
+                                                *sub_locations_list,)
+        self.sub_locations_menu.config(highlightbackground=self.formatting.colour_code_1)
+        self.sub_locations_menu.config(font=self.formatting.medium_step_font)
+        # Amount Remaining Information
+        tk.Label(edit_inventory_product_popup,
+                 text="Editing Inventory",
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=0, column=0, sticky=tk.W, pady=5, padx=10)
+        tk.Label(edit_inventory_product_popup,
+                 text="INV-" + str(inventory_item[18]),
+                 font=self.formatting.homepage_window_select_button_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_purple).grid(
+            row=0, column=1, sticky=tk.W, pady=5, padx=10)
+        tk.Label(edit_inventory_product_popup,
+                 text="Edit Amounts Information",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=1, column=0, sticky=tk.W, pady=5, padx=10)
+        tk.Label(edit_inventory_product_popup,
+                 text="Full Units Remaining",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=2, column=0, sticky=tk.W, padx=10)
+        full_units_remaining_entry = tk.Entry(edit_inventory_product_popup)
+        full_units_remaining_entry.grid(row=2, column=1, sticky=tk.W, padx=10)
+        full_units_remaining_entry.insert(tk.END, inventory_item[6])
+        tk.Label(edit_inventory_product_popup,
+                 text="Partial Units Remaining",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=10)
+        partial_units_remaining_entry = tk.Entry(edit_inventory_product_popup)
+        partial_units_remaining_entry.grid(row=3, column=1, sticky=tk.W, padx=10)
+        partial_units_remaining_entry.insert(tk.END, inventory_item[7])
+        tk.Label(edit_inventory_product_popup,
+                 text="Edit Location Information",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        tk.Label(edit_inventory_product_popup,
+                 text="Main Location:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=5, column=0, sticky=tk.W, padx=10)
+        locations_value.set(locations_list[0])
+        locations_menu.grid(row=5, column=1, sticky=tk.W, padx=10)
+        tk.Label(edit_inventory_product_popup,
+                 text="Sub Location:",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=6, column=0, sticky=tk.W, padx=10)
+        self.sub_locations_value.set(sub_locations_list[0])
+        self.sub_locations_menu.grid(row=6, column=1, sticky=tk.W, padx=10)
+        tk.Button(edit_inventory_product_popup,
+                  text="Refresh Sub-Locations",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.refresh_sub_locations_on_inventory_window(
+                      locations_dict[locations_value.get()],
+                      edit_inventory_product_popup)).grid(
+            row=7, column=0, sticky=tk.W, padx=10, pady=5)
+        tk.Label(edit_inventory_product_popup,
+                 text="Inventory Comments",
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_2).grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=5, padx=10)
+        inventory_notes = tk.Text(edit_inventory_product_popup,
+                                  height=5,
+                                  width=40)
+        inventory_notes.config(bg=self.formatting.colour_code_2)
+        inventory_notes.config(state=tk.NORMAL)
+        inventory_notes.insert(tk.END, inventory_item[17])
+        inventory_notes.grid(row=9, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
+        tk.Button(edit_inventory_product_popup,
+                  text="Commit Changes",
+                  font=self.formatting.medium_step_font,
+                  command=lambda item=inventory_item: self.check_edits_and_commit_changes_to_inventory_product(
+                      item[18],
+                      full_units_remaining_entry.get(),
+                      partial_units_remaining_entry.get(),
+                      locations_dict[locations_value.get()],
+                      self.sub_locations_dict[self.sub_locations_value.get()],
+                      inventory_notes.get("1.0", tk.END),
+                      edit_inventory_product_popup,
+                      inventory_item_popup
+                  )).grid(
+            row=10,
+            column=0,
+            columnspan=3,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
+
+    def check_edits_and_commit_changes_to_inventory_product(self,
+                                                            inventory_id,
+                                                            full_units_remaining,
+                                                            partial_units_remaining,
+                                                            location_id,
+                                                            sub_location_id,
+                                                            comments,
+                                                            edit_popup_window,
+                                                            inventory_popup_window):
+        full_units_int_check = self.error_handling.checkIfInt(full_units_remaining)
+        partial_units_int_check = self.error_handling.checkIfInt(partial_units_remaining)
+        if full_units_int_check and partial_units_int_check:
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "full_units_remaining",
+                                                             full_units_remaining,
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "partial_units_remaining",
+                                                             partial_units_remaining,
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "location_id",
+                                                             location_id,
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "sub_location_id",
+                                                             sub_location_id,
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
                                                              "comments",
                                                              comments,
-                                                             received_id)
-            received_popup_window.destroy()
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "sub_location_id",
+                                                             sub_location_id,
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "updated_user_id",
+                                                             self.active_user[0],
+                                                             inventory_id)
+            self.edit_db.edit_one_record_one_field_one_table("inventory",
+                                                             "last_updated",
+                                                             datetime.date.today(),
+                                                             inventory_id)
+            inventory_popup_window.destroy()
             edit_popup_window.destroy()
             self.parent.display_inventory_view(self.active_user,
                                                sort_by=self.sort_by,
@@ -776,96 +790,47 @@ class InventoryView(tk.Frame):
                                                    font=self.formatting.medium_step_font,
                                                    bg=self.formatting.colour_code_1,
                                                    fg=self.formatting.colour_code_3).grid(
-                row=17,
+                row=11,
                 column=0,
                 columnspan=3,
                 sticky=tk.W,
                 pady=5,
                 padx=10)
 
-    def inventory_received_item_popup(self, item_to_inventory):
-        inventory_received_item_popup = tk.Toplevel()
-        inventory_received_item_popup.config(bg=self.formatting.colour_code_1)
-        inventory_received_item_popup.geometry('600x200')
-        locations_dict = {}
-        locations_list = []
-        sub_locations_dict = {}
-        sub_locations_list = []
-        locations = self.select_db.select_all_from_table("inventoryLocations")
-        for item in locations:
-            locations_dict[item[1]] = item[0]
-            locations_list.append(item[1])
-        sub_locations = self.select_db.select_all_from_table_where_one_field_equals(
-            "inventorySubLocations",
-            "locations_id",
-            locations_dict[locations_list[0]],)
-        for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
-            sub_locations_list.append(item[2])
-        locations_value = tk.StringVar(inventory_received_item_popup)
-        self.sub_locations_value = tk.StringVar(inventory_received_item_popup)
-        locations_menu = tk.OptionMenu(inventory_received_item_popup,
-                                       locations_value,
-                                       *locations_list,)
-        locations_menu.config(highlightbackground=self.formatting.colour_code_1)
-        locations_menu.config(font=self.formatting.medium_step_font)
-        self.sub_locations_menu = tk.OptionMenu(inventory_received_item_popup,
-                                                self.sub_locations_value,
-                                                *sub_locations_list,)
-        self.sub_locations_menu.config(highlightbackground=self.formatting.colour_code_1)
-        self.sub_locations_menu.config(font=self.formatting.medium_step_font)
-        tk.Label(inventory_received_item_popup,
-                 text="Receive " + item_to_inventory[0],
-                 font=self.formatting.homepage_window_select_button_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=1,
-                                                        column=0,
-                                                        columnspan=3,
-                                                        sticky=tk.W,
-                                                        padx=10,
-                                                        pady=10)
-        tk.Label(inventory_received_item_popup,
-                 text="Location: ",
+    def archive_inventory_popup(self, product_to_delete):
+        are_you_sure_logout_popup = tk.Toplevel()
+        are_you_sure_logout_popup.config(bg=self.formatting.colour_code_1)
+        are_you_sure_logout_popup.geometry('600x90')
+        tk.Label(are_you_sure_logout_popup,
+                 text="Are you sure you want to archive this inventory item?",
                  font=self.formatting.medium_step_font,
                  bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=2, column=0, sticky=tk.W, padx=10, pady=10)
-        locations_value.set(locations_list[0])
-        locations_menu.grid(row=2, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(inventory_received_item_popup,
-                  text="Refresh Sub-Locations",
-                  font=self.formatting.medium_step_font,
-                  command=lambda: self.refresh_sub_locations_on_inventory_window(
-                      locations_dict[locations_value.get()],
-                      inventory_received_item_popup)).grid(
-            row=2, column=2, sticky=tk.W, padx=10, pady=10)
-        tk.Label(inventory_received_item_popup,
-                 text="Sub-Category",
-                 font=self.formatting.medium_step_font,
-                 bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_2).grid(row=3, column=0, sticky=tk.W, padx=10, pady=10)
-        self.sub_locations_value.set(sub_locations_list[0])
-        self.sub_locations_menu.grid(row=3, column=1, sticky=tk.W, padx=10, pady=10)
-        tk.Button(inventory_received_item_popup,
-                  text="Add to Inventory",
-                  font=self.formatting.medium_step_font,
-                  command=lambda item=item_to_inventory: self.add_inventory_item_and_reload_page(
-                      item,
-                      locations_dict[locations_value.get()],
-                      sub_locations_dict[self.sub_locations_value.get()],
-                      "",
-                      inventory_received_item_popup)).grid(
-            row=4,
-            column=0,
-            columnspan=3,
-            sticky=tk.W,
-            padx=10,
-            pady=5)
+                 fg=self.formatting.colour_code_2).grid(row=0, column=0, sticky=tk.W, padx=10, pady=10)
+        yes_i_am = tk.Button(are_you_sure_logout_popup,
+                             text="Yes",
+                             font=self.formatting.medium_step_font,
+                             command=lambda: self.destroy_popup_archive_inventory_and_reload(
+                                 product_to_delete,
+                                 are_you_sure_logout_popup)).grid(
+            row=0, column=1, sticky=tk.W, padx=10, pady=10)
+        no_i_aint = tk.Button(are_you_sure_logout_popup,
+                              text="No",
+                              font=self.formatting.medium_step_font,
+                              command=lambda: are_you_sure_logout_popup.destroy()).grid(
+            row=0, column=2, sticky=tk.W, padx=10, pady=10)
+
+    def destroy_popup_archive_inventory_and_reload(self, product_to_archive, top_level_window):
+        self.edit_db.archive_entry_in_table_by_id("inventory", product_to_archive[18])
+        self.parent.display_inventory_view(self.active_user,
+                                           sort_by=self.sort_by,
+                                           search_by=self.search_by_active_term,
+                                           search_by_variable=self.search_by_variable)
+        top_level_window.destroy()
 
     def refresh_sub_locations_on_inventory_window(self,
                                                   new_location,
                                                   inventory_popup):
         self.sub_locations_menu.destroy()
-        sub_locations_dict = {}
         sub_locations_list = []
         self.sub_locations_value = tk.StringVar(inventory_popup)
         sub_locations = self.select_db.select_all_from_table_where_one_field_equals(
@@ -873,7 +838,7 @@ class InventoryView(tk.Frame):
             "locations_id",
             new_location,)
         for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
+            self.sub_locations_dict[item[2]] = item[0]
             sub_locations_list.append(item[2])
         self.sub_locations_menu = tk.OptionMenu(inventory_popup,
                                                 self.sub_locations_value,
@@ -881,7 +846,7 @@ class InventoryView(tk.Frame):
         self.sub_locations_menu.config(highlightbackground=self.formatting.colour_code_1)
         self.sub_locations_menu.config(font=self.formatting.medium_step_font)
         self.sub_locations_value.set(sub_locations_list[0])
-        self.sub_locations_menu.grid(row=3, column=1, sticky=tk.W, padx=10, pady=10)
+        self.sub_locations_menu.grid(row=6, column=1, sticky=tk.W, padx=10)
 
     def add_inventory_item_and_reload_page(self,
                                            item_to_inventory,

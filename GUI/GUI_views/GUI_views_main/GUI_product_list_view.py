@@ -5,6 +5,7 @@ from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
 from GUI.GUI_formatting import GUI_errorHandling as tk_errorHandling
+from GUI.GUI_formatting import GUI_data_export as tk_dataExport
 
 
 class ProductListView(tk.Frame):
@@ -61,6 +62,7 @@ class ProductListView(tk.Frame):
         # GUI Formatting
         self.formatting = tk_formatting.TkFormattingMethods()
         self.error_handling = tk_errorHandling.ErrorHandling()
+        self.data_export = tk_dataExport.TkDataExportMethods()
         # SQL methods
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
@@ -110,6 +112,7 @@ class ProductListView(tk.Frame):
         # Error Handling
         self.historicalDateFailLabel = tk.Label()
         self.editDateFailLabel = tk.Label()
+        self.printable_products_list = []
 
     # MAIN METHODS ####################################################################################################
 
@@ -280,6 +283,19 @@ class ProductListView(tk.Frame):
             sticky=tk.W,
             padx=10,
             pady=5)
+        # print view
+        tk.Button(self.products_list_navigation_frame,
+                  text="Print",
+                  font=self.formatting.medium_step_font,
+                  command=lambda : self.data_export.generate_data_export_popup(
+                      self.active_user,
+                      self.printable_products_list,
+                      "products")).grid(
+            row=0,
+            column=10,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
     def get_products_list_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
         """Gets product list from database based on optional arguments. Sort by determines the sorting of
@@ -410,6 +426,7 @@ class ProductListView(tk.Frame):
         except TypeError:
             pass
         for item in self.products_list:
+            self.printable_products_list.append(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
             else:
@@ -1341,11 +1358,19 @@ class ProductListView(tk.Frame):
                                                                                     add_new_price_popup)
                   ).grid(row=1, column=0, columnspan=2, sticky=tk.W, padx=10)
         tk.Button(add_new_price_popup,
+                  text="Add Historical Price",
+                  font=self.formatting.medium_step_font,
+                  command=lambda: self.historical_price_popup(latest_product[0][0],
+                                                              price_entry.get(),
+                                                              new_product_window,
+                                                              add_new_price_popup)
+                  ).grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+        tk.Button(add_new_price_popup,
                   text="Skip",
                   font=self.formatting.medium_step_font,
                   command=lambda: self.skip_add_new_price_and_reload(new_product_window,
                                                                      add_new_price_popup)
-                  ).grid(row=2, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
+                  ).grid(row=3, column=0, columnspan=2, sticky=tk.W, padx=10, pady=5)
 
     # PRODUCT DELETION MAIN POPUP ####################################################################################
 

@@ -83,6 +83,13 @@ class TopSelectView(tk.Frame):
                                       self.active_user))
         received_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
         column_count += 1
+        received_view = tk.Button(self,
+                                  text="Locations",
+                                  font=self.formatting.medium_step_font,
+                                  command=lambda: self.parent.display_locations_view(
+                                      self.active_user))
+        received_view.grid(row=0, column=column_count, sticky=tk.W, padx=10, pady=5)
+        column_count += 1
         if self.active_user[1] == 1:
             display_all_carts = tk.Button(self,
                                           text="Approvals",

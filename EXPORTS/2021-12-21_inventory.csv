@@ -1,0 +1,4 @@
+INV Number,Product Name,Product ID,Category,Vendor,Unit of Issue,Receive Date,Full Units Remaining,Partial Units Remaining,Location,Sub-Location,Last Updated,
+1,CBDV,34123,standards,Restek,1mL,2021-11-26,0,1,upstairs,none,2021-12-19,
+2,CBDV,34123,standards,Restek,1mL,2021-11-26,2,0,downstairs,none,2021-12-14,
+4,CBDV,34123,standards,Restek,1mL,2021-12-18,2,0,upstairs,none,2021-12-18,

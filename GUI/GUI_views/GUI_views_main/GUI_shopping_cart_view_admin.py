@@ -3,6 +3,7 @@ from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_data_export as tk_dataExport
 import datetime
 
 
@@ -13,6 +14,7 @@ class ShoppingCartViewAdmin(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.data_export = tk_dataExport.TkDataExportMethods()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
         self.edit_db = dB_edit.EditDb()
@@ -59,6 +61,7 @@ class ShoppingCartViewAdmin(tk.Frame):
         self.search_by_active_term = ""
         self.sort_by = ""
         self.search_by_variable = ""
+        self.printable_shopping_cart = []
 
     # MAIN METHOD
 
@@ -146,6 +149,19 @@ class ShoppingCartViewAdmin(tk.Frame):
                       self.active_user)).grid(
             row=0, column=9, sticky=tk.W, padx=10, pady=5
         )
+        # print view
+        tk.Button(self.shopping_cart_navigation_frame,
+                  text="Print",
+                  font=self.formatting.medium_step_font,
+                  command=lambda : self.data_export.generate_data_export_popup(
+                      self.active_user,
+                      self.printable_shopping_cart,
+                      "requests")).grid(
+            row=0,
+            column=10,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
     def get_active_user_shopping_cart_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
         if sort_by and search_by:
@@ -258,6 +274,7 @@ class ShoppingCartViewAdmin(tk.Frame):
         row_counter = 1
         even_odd = 1
         for item in self.shopping_cart:
+            self.printable_shopping_cart.append(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
             else:

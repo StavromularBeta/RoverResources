@@ -4,6 +4,7 @@ from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
 from GUI.GUI_formatting import GUI_errorHandling as tk_errorHandling
+from GUI.GUI_formatting import GUI_data_export as tk_dataExport
 import datetime
 
 
@@ -14,6 +15,7 @@ class OrdersView(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.data_export = tk_dataExport.TkDataExportMethods()
         self.error_handling = tk_errorHandling.ErrorHandling()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
@@ -61,6 +63,7 @@ class OrdersView(tk.Frame):
         self.sort_by = ""
         self.search_by_variable = ""
         self.popup_error_message = tk.Label()
+        self.printable_orders_list = []
 
     def orders_view(self, user, sort_by=False, search_by=False, search_by_variable=False):
         self.sort_by = sort_by
@@ -143,6 +146,19 @@ class OrdersView(tk.Frame):
                       self.active_user)).grid(
             row=0, column=9, sticky=tk.W, padx=10, pady=5
         )
+        # print view
+        tk.Button(self.orders_navigation_frame,
+                  text="Print",
+                  font=self.formatting.medium_step_font,
+                  command=lambda : self.data_export.generate_data_export_popup(
+                      self.active_user,
+                      self.printable_orders_list,
+                      "orders")).grid(
+            row=0,
+            column=10,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
     def get_active_orders_from_database(self, sort_by=None, search_by=None, search_by_variable=None):
         if sort_by and search_by:
@@ -284,6 +300,7 @@ class OrdersView(tk.Frame):
         row_counter = 1
         even_odd = 1
         for item in self.orders:
+            self.printable_orders_list.append(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2
             else:
@@ -348,9 +365,52 @@ class OrdersView(tk.Frame):
                                                                                                sticky=tk.W,
                                                                                                padx=10,
                                                                                                pady=5)
+                tk.Button(self.orders_frame,
+                          text="Cancel Order",
+                          font=self.formatting.medium_step_font,
+                          command=lambda item=item: self.cancel_order_popup(item[10])).grid(row=row_counter,
+                                                                                            column=12,
+                                                                                            sticky=tk.W,
+                                                                                            padx=10,
+                                                                                            pady=5)
             row_counter += 1
             even_odd += 1
             self.orders_canvas_length += 50
+
+    def cancel_order_popup(self, order_to_cancel):
+        cancel_order_popup = tk.Toplevel()
+        cancel_order_popup.config(bg=self.formatting.colour_code_1)
+        cancel_order_popup.geometry('900x250')
+        tk.Label(cancel_order_popup,
+                 text="Are you sure you want to cancel this order? it will be removed" +
+                 " from the database permanently.\n" +
+                 "Alternatively, you can archive this order if you're unsure.",
+                 justify=tk.LEFT,
+                 font=self.formatting.medium_step_font,
+                 bg=self.formatting.colour_code_1,
+                 fg=self.formatting.colour_code_3).grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=5, padx=10)
+        tk.Button(cancel_order_popup,
+                  text="Cancel Order",
+                  font=self.formatting.medium_step_font,
+                  command=lambda item=order_to_cancel: self.cancel_order_if_not_partially_received_and_reload_page(
+                      item,
+                      cancel_order_popup)).grid(
+            row=1,
+            column=0,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
+        tk.Button(cancel_order_popup,
+                  text="Archive Order",
+                  font=self.formatting.medium_step_font,
+                  command=lambda item=order_to_cancel: self.archive_order_and_reload_orders_page(
+                      item,
+                      cancel_order_popup)).grid(
+            row=2,
+            column=0,
+            sticky=tk.W,
+            padx=10,
+            pady=5)
 
     def receive_product_popup(self, order_to_receive):
         receive_product_popup = tk.Toplevel()
@@ -608,4 +668,27 @@ class OrdersView(tk.Frame):
                                         search_by=self.search_by_active_term,
                                         search_by_variable=self.search_by_variable)
 
+    def cancel_order_if_not_partially_received_and_reload_page(self,
+                                                               order_to_remove,
+                                                               cancel_order_popup):
+        potential_partial_order_list = self.select_db.select_all_from_table_where_one_field_like("received",
+                                                                                                 "orders_id",
+                                                                                                 order_to_remove)
+        partial_order_list = [item for item in potential_partial_order_list]
+        if len(partial_order_list) > 0:
+            tk.Label(cancel_order_popup,
+                     text="This order has been partially received and therefore can only be archived.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(row=3, column=0, columnspan=3, sticky=tk.W, pady=5, padx=10)
+
+        else:
+            self.add_delete_db.delete_entries_from_table_by_field_condition("orders",
+                                                                            "id",
+                                                                            order_to_remove)
+            cancel_order_popup.destroy()
+            self.parent.display_orders_view(self.active_user,
+                                            sort_by=self.sort_by,
+                                            search_by=self.search_by_active_term,
+                                            search_by_variable=self.search_by_variable)
 

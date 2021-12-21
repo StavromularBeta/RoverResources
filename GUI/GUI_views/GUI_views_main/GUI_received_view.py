@@ -58,6 +58,7 @@ class ReceivedView(tk.Frame):
         self.editReceivedFailLabel = tk.Label()
         self.sub_locations_menu = ""
         self.sub_locations_value = ""
+        self.sub_locations_dict = {}
         self.search_by_active_term = ""
         self.sort_by = ""
         self.search_by_variable = ""
@@ -745,7 +746,6 @@ class ReceivedView(tk.Frame):
         inventory_received_item_popup.geometry('600x200')
         locations_dict = {}
         locations_list = []
-        sub_locations_dict = {}
         sub_locations_list = []
         locations = self.select_db.select_all_from_table("inventoryLocations")
         for item in locations:
@@ -756,7 +756,7 @@ class ReceivedView(tk.Frame):
             "locations_id",
             locations_dict[locations_list[0]],)
         for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
+            self.sub_locations_dict[item[2]] = item[0]
             sub_locations_list.append(item[2])
         locations_value = tk.StringVar(inventory_received_item_popup)
         self.sub_locations_value = tk.StringVar(inventory_received_item_popup)
@@ -807,7 +807,7 @@ class ReceivedView(tk.Frame):
                   command=lambda item=item_to_inventory: self.add_inventory_item_and_reload_page(
                       item,
                       locations_dict[locations_value.get()],
-                      sub_locations_dict[self.sub_locations_value.get()],
+                      self.sub_locations_dict[self.sub_locations_value.get()],
                       "",
                       inventory_received_item_popup)).grid(
             row=4,
@@ -821,7 +821,6 @@ class ReceivedView(tk.Frame):
                                                   new_location,
                                                   inventory_popup):
         self.sub_locations_menu.destroy()
-        sub_locations_dict = {}
         sub_locations_list = []
         self.sub_locations_value = tk.StringVar(inventory_popup)
         sub_locations = self.select_db.select_all_from_table_where_one_field_equals(
@@ -829,7 +828,7 @@ class ReceivedView(tk.Frame):
             "locations_id",
             new_location,)
         for item in sub_locations:
-            sub_locations_dict[item[2]] = item[0]
+            self.sub_locations_dict[item[2]] = item[0]
             sub_locations_list.append(item[2])
         self.sub_locations_menu = tk.OptionMenu(inventory_popup,
                                                 self.sub_locations_value,
