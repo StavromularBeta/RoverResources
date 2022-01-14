@@ -219,7 +219,9 @@ class ReceivedView(tk.Frame):
                      text=item[0],
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
-                     fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+                     fg=text_color,
+                     wraplength=200,
+                     justify=tk.LEFT).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.received_frame,
                      text=item[1],
                      font=self.formatting.medium_step_font,

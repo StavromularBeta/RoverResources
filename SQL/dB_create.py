@@ -168,6 +168,13 @@ class CreateTb(Connector):
             query = "ALTER TABLE " + key + " ADD COLUMN approved bool DEFAULT True"
             self.db_connector(query)
 
+    def db_table_add_default_column(self, table_name, column_name, column_type, default_value):
+        """Iterates through the table dictionary and adds a field called approved, which is a bool, and is default
+        true. This field allows products to be requested, as well as added directly by an admin. """
+        query = "ALTER TABLE " + table_name + " ADD COLUMN " + column_name + " " + column_type + " DEFAULT " +\
+            default_value
+        self.db_connector(query)
+
     def db_drop_table(self, table_name):
         """Iterates through the table dictionary and adds a field called approved, which is a bool, and is default
         true. This field allows products to be requested, as well as added directly by an admin. """
@@ -177,4 +184,5 @@ class CreateTb(Connector):
 
 # set up to create tables if run, and print tables to console.
 db = CreateTb()
-db.db_table_creator(True)
+# db.db_table_creator(True)
+# db.db_table_add_default_column("products", "card_comments", "text", "''")
