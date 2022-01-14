@@ -279,15 +279,14 @@ class ShoppingCartViewAdmin(tk.Frame):
                 text_color = self.formatting.colour_code_2
             else:
                 text_color = self.formatting.colour_code_3
-            if len(item[0]) > 20:
-                product_name = item[0][0:20] + "..."
-            else:
-                product_name = item[0]
+            product_name = item[0]
             tk.Label(self.shopping_cart_frame,
                      text=product_name,
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
-                     fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+                     fg=text_color,
+                     wraplength=200,
+                     justify=tk.LEFT).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.shopping_cart_frame,
                      text=item[1],
                      font=self.formatting.medium_step_font,
@@ -384,6 +383,16 @@ class ShoppingCartViewAdmin(tk.Frame):
         order_product_popup.config(bg=self.formatting.colour_code_1)
         order_product_popup.geometry('550x450')
         units_ordered_entry = tk.Entry(order_product_popup)
+        most_recent_order_check = self.select_db.left_join_multiple_tables(
+            "o.id, p.name, o.units_ordered, o.order_date",
+            [["orders o", "", "o.requests_id"],
+             ["requests r", "r.id", "r.products_id"],
+             ["products p", "p.id", ""]],
+            "o.order_date DESC LIMIT 1",
+            search_by=["p.name", '%' + product_to_order + '%'],
+            no_archive="o.archived"
+        )
+        most_recent_order_check = [item for item in most_recent_order_check]
         tk.Label(order_product_popup,
                  text="Units Ordered: ",
                  font=self.formatting.homepage_window_select_button_font,
@@ -414,6 +423,21 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                                                     product_to_order)).grid(
             row=3, column=0, sticky=tk.W, padx=10, pady=5
         )
+        if len(most_recent_order_check) > 0:
+            tk.Label(order_product_popup,
+                     text="Last ordered: " + str(most_recent_order_check[0][2]) + " Units on " +
+                     str(most_recent_order_check[0][3]) + ".",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=4, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+        else:
+            tk.Label(order_product_popup,
+                     text="No record of product being ordered previously.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=4, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
     def order_request_and_reload_admin_shopping_cart(self,
                                                      requests_id,
@@ -442,7 +466,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=self.formatting.colour_code_3).grid(
-                row=4, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+                row=5, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
             tk.Button(order_popup,
                       text="Confirm Order",
                       font=self.formatting.medium_step_font,
@@ -453,7 +477,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                                                         order_popup,
                                                                                         product_to_order,
                                                                                         confirmed=True)).grid(
-                row=5, column=0, sticky=tk.W, padx=10, pady=5)
+                row=6, column=0, sticky=tk.W, padx=10, pady=5)
         else:
             self.add_delete_db.new_orders_record((requests_id,
                                                  order_date,

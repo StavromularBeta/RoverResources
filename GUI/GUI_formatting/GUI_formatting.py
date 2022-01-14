@@ -28,7 +28,9 @@ class TkFormattingMethods:
                                    text=text,
                                    font=self.medium_step_font,
                                    bg=self.colour_code_1,
-                                   fg=text_colour)
+                                   fg=text_colour,
+                                   wraplength=200,
+                                   justify=tk.LEFT)
         return label_to_return
 
     def grid_shopping_cart_labels(self,

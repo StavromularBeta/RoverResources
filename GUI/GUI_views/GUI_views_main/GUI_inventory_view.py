@@ -242,15 +242,14 @@ class InventoryView(tk.Frame):
                 sticky=tk.W,
                 pady=5,
                 padx=10)
-            if len(item[0]) > 20:
-                product_name = item[0][0:20] + "..."
-            else:
-                product_name = item[0]
+            product_name = item[0]
             tk.Label(self.inventory_frame,
                      text=product_name,
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
-                     fg=text_color).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
+                     fg=text_color,
+                     wraplength=200,
+                     justify=tk.LEFT).grid(row=row_counter, column=1, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.inventory_frame,
                      text=item[1],
                      font=self.formatting.medium_step_font,
