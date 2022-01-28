@@ -1,3 +1,4 @@
+import datetime
 from tkinter import font as tk_font
 import tkinter as tk
 
@@ -33,8 +34,37 @@ class TkFormattingMethods:
                                    justify=tk.LEFT)
         return label_to_return
 
+    def create_double_width_shopping_cart_labels(self,
+                                                 frame,
+                                                 text,
+                                                 text_colour):
+        label_to_return = tk.Label(frame,
+                                   text=text,
+                                   font=self.medium_step_font,
+                                   bg=self.colour_code_1,
+                                   fg=text_colour,
+                                   wraplength=400,
+                                   justify=tk.LEFT)
+        return label_to_return
+
     def grid_shopping_cart_labels(self,
                                   label,
                                   row,
                                   column):
         label.grid(row=row, column=column, sticky=tk.W, padx=10, pady=5)
+
+    def insert_newlines(self,
+                        string,
+                        when_to_newline):
+        return '\n'.join(string[i:i+when_to_newline] for i in range(0, len(string), when_to_newline))
+
+    def lab_date_format(self,
+                        date_to_convert):
+        year = date_to_convert.split("-")[0]
+        month = date_to_convert.split("-")[1]
+        day = date_to_convert.split("-")[2]
+        datetime_format = datetime.datetime(int(year),
+                                            int(month),
+                                            int(day))
+        lab_format = datetime_format.strftime("%d%b%y")
+        return lab_format

@@ -330,7 +330,9 @@ class UsersView(tk.Frame):
         user_notes = tk.Text(open_user_popup,
                              height=5,
                              width=40)
-        user_notes.config(bg=self.formatting.colour_code_2)
+        user_notes.config(bg=self.formatting.colour_code_2,
+                          fg=self.formatting.colour_code_1,
+                          font=self.formatting.medium_step_font)
         user_notes.insert(tk.END, user[4])
         user_notes.config(state=tk.DISABLED, wrap="word")
         user_notes.grid(row=3, column=0, columnspan=4, sticky=tk.W, padx=10, pady=10)
@@ -411,7 +413,9 @@ class UsersView(tk.Frame):
         user_notes = tk.Text(new_user_popup,
                              height=5,
                              width=40)
-        user_notes.config(bg=self.formatting.colour_code_2)
+        user_notes.config(bg=self.formatting.colour_code_2,
+                          fg=self.formatting.colour_code_1,
+                          font=self.formatting.medium_step_font)
         user_notes.config(state=tk.NORMAL, wrap="word")
         user_notes.grid(row=4, column=0, columnspan=4, sticky=tk.W, padx=10, pady=10)
         tk.Label(new_user_popup,
@@ -479,7 +483,9 @@ class UsersView(tk.Frame):
         user_notes = tk.Text(edit_notes_popup,
                              height=5,
                              width=40)
-        user_notes.config(bg=self.formatting.colour_code_2)
+        user_notes.config(bg=self.formatting.colour_code_2,
+                          fg=self.formatting.colour_code_1,
+                          font=self.formatting.medium_step_font)
         user_notes.config(state=tk.NORMAL)
         user_notes.insert(tk.END, user[4])
         user_notes.grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)

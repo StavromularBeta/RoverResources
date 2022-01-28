@@ -2,6 +2,7 @@ import tkinter as tk
 from SQL import dB_select
 from SQL import dB_add_delete
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_errorHandling as tk_error_handling
 import datetime
 
 
@@ -12,6 +13,7 @@ class ShoppingCartView(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.error_handling = tk_error_handling.ErrorHandling()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
         self.products_list = ""
@@ -397,7 +399,7 @@ class ShoppingCartView(tk.Frame):
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=4, sticky=tk.W, padx=10, pady=5)
             tk.Label(self.shopping_cart_frame,
-                     text=item[4],
+                     text=self.formatting.lab_date_format(item[4]),
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=text_color).grid(row=row_counter, column=5, sticky=tk.W, padx=10, pady=5)
@@ -469,11 +471,29 @@ class ShoppingCartView(tk.Frame):
         tk.Button(add_product_amount_popup,
                   text="Add Request",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.add_product_to_cart_query(product_to_add,
-                                                                 amount_of_product.get(),
-                                                                 add_product_amount_popup)).grid(
+                  command=lambda: self.check_amount_requested_then_add_to_cart(product_to_add,
+                                                                               amount_of_product.get(),
+                                                                               add_product_amount_popup)).grid(
             row=1, column=0, sticky=tk.W, padx=10, pady=5
         )
+
+    def check_amount_requested_then_add_to_cart(self,
+                                                product_to_add,
+                                                amount_of_product,
+                                                add_product_amount_popup):
+        amount_check = self.error_handling.checkBlankEntry(amount_of_product)
+        int_check = self.error_handling.checkIfInt(amount_of_product)
+        if amount_check and int_check:
+            self.add_product_to_cart_query(product_to_add,
+                                           amount_of_product,
+                                           add_product_amount_popup)
+        else:
+            tk.Label(add_product_amount_popup,
+                     text="Amount requested must be an integer value.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                    row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
     def add_product_to_cart_query(self, product_to_add, amount_of_product, top_level):
         current_product_price = self.select_db.select_one_from_table_where_field_equals_order_by("priceTracking",

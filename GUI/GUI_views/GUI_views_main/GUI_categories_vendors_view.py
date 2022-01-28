@@ -378,7 +378,7 @@ class CategoriesVendorsView(tk.Frame):
     def updated_vendor_popup(self, vendor):
         vendor_popup = tk.Toplevel()
         vendor_popup.config(bg=self.formatting.colour_code_1)
-        vendor_popup.geometry('1400x500')
+        vendor_popup.geometry('1600x650')
         vendor_information_frame = tk.Frame(vendor_popup)
         vendor_product_frame = tk.Frame(vendor_popup)
         vendor_order_frame = tk.Frame(vendor_popup)
@@ -410,7 +410,9 @@ class CategoriesVendorsView(tk.Frame):
         vendor_notes = tk.Text(vendor_information_frame,
                                height=5,
                                width=40)
-        vendor_notes.config(bg=self.formatting.colour_code_2)
+        vendor_notes.config(bg=self.formatting.colour_code_2,
+                            fg=self.formatting.colour_code_1,
+                            font=self.formatting.medium_step_font)
         vendor_notes.insert(tk.END, vendor[2])
         vendor_notes.config(state=tk.DISABLED, wrap="word")
         vendor_notes.grid(row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=10)
@@ -467,14 +469,13 @@ class CategoriesVendorsView(tk.Frame):
                                       height=23,
                                       width=60)
             product_textbox.config(state=tk.NORMAL)
-            product_textbox.config(bg=self.formatting.colour_code_2)
-            product_textbox.insert(tk.END, " Product Name             | Cat #          | Unit of Issue \n")
-            product_textbox.insert(tk.END, "-----------------------------------------------------------\n")
+            product_textbox.config(bg=self.formatting.colour_code_2,
+                                   fg=self.formatting.colour_code_1,
+                                   font=self.formatting.medium_step_font)
             for item in product_order_history_list:
-                product_textbox.insert(tk.END, (" " + str(item[1]) + " "*(25-len(str(item[1]))) + "| " +
-                                                str(item[2]) + " "*(15-len(str(item[2]))) + "| " +
-                                                str(item[3]) +
-                                                "\n"))
+                product_textbox.insert(tk.END, (item[1].strip() + "\n" +
+                                                "Product ID:       " + item[2].strip() + "\n" +
+                                                "Unit of Issue:    " + item[3].strip() + "\n\n"))
             product_textbox.config(state=tk.DISABLED, wrap="word")
             product_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
             row_counter += 1
@@ -485,7 +486,7 @@ class CategoriesVendorsView(tk.Frame):
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2).grid(row=0, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
         vendor_order_history = self.select_db.left_join_multiple_tables(
-            "o.id, o.order_date, o.units_ordered, p.name",
+            "o.id, o.order_date, o.units_ordered, p.name, p.unit_of_issue",
             [["orders o", "", "o.requests_id"],
              ["requests r", "r.id", "r.products_id"],
              ["products p", "p.id", "p.vendors_id"],
@@ -580,14 +581,14 @@ class CategoriesVendorsView(tk.Frame):
                                             height=18,
                                             width=55)
             order_history_textbox.config(state=tk.NORMAL)
-            order_history_textbox.config(bg=self.formatting.colour_code_2)
-            order_history_textbox.insert(tk.END, " Product Name             | # Ordered  | Date \n")
-            order_history_textbox.insert(tk.END, "-----------------------------------------------------\n")
+            order_history_textbox.config(bg=self.formatting.colour_code_2,
+                                         fg=self.formatting.colour_code_1,
+                                         font=self.formatting.medium_step_font)
             for item in order_history_list:
-                order_history_textbox.insert(tk.END, (" " + str(item[3]) + " "*(25-len(str(item[3]))) + "| " +
-                                                      str(item[2]) + " "*(11-len(str(item[2]))) + "| " +
-                                                      str(item[1]) +
-                                                      "\n"))
+                order_history_textbox.insert(tk.END, (str(item[3]) + "\n" +
+                                                      "Amount Ordered: " + str(item[2]) + " x " + str(item[4]) + "\n" +
+                                                      "Order Date:     " + self.formatting.lab_date_format(item[1]) +
+                                                      "\n\n"))
             order_history_textbox.config(state=tk.DISABLED, wrap="word")
             order_history_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
             row_counter += 1
