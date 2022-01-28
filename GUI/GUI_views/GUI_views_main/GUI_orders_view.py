@@ -300,6 +300,7 @@ class OrdersView(tk.Frame):
         row_counter = 1
         even_odd = 1
         for item in self.orders:
+            print(item)
             self.printable_orders_list.append(item)
             if even_odd % 2 == 0:
                 text_color = self.formatting.colour_code_2

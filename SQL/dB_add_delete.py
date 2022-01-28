@@ -142,7 +142,7 @@ class AddDelete(Connector):
         query = 'INSERT OR IGNORE INTO users (credentials_id, user_name, user_password, comments) VALUES (?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_requests_record(self, values):
+    def new_requests_record(self, values, wizard=False):
         """Inserts new record into requests table. Requests table hold requests for products made by users. These are
         viewed in the GUI as individual 'shopping carts'.
 
@@ -151,14 +151,23 @@ class AddDelete(Connector):
 
         values : tuple
             (products ID, users ID, request date, unit of issue, dollars per unit, amount, comments)
+
+        wizard : bool
+            indicates the request is being made by the inventory record, in which case it is archived immediately.
         """
-        query = 'INSERT OR IGNORE' \
-                ' INTO requests' \
-                ' (products_id, users_id, price_id, request_date, amount, comments)' \
-                ' VALUES (?,?,?,?,?,?)'
+        if wizard:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO requests' \
+                    ' (products_id, users_id, price_id, request_date, amount, comments, archived, approved)' \
+                    ' VALUES (?,?,?,?,?,?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO requests' \
+                    ' (products_id, users_id, price_id, request_date, amount, comments)' \
+                    ' VALUES (?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_orders_record(self, values):
+    def new_orders_record(self, values, wizard=False):
         """Inserts new record into orders table. Orders table holds orders made by the lab. Each order has to have an
         associated request, that needs to have been approved by staff with admin credentials.
 
@@ -167,11 +176,20 @@ class AddDelete(Connector):
 
         values : tuple
             (requests ID, order date, units ordered, comments)
+
+        wizard : bool
+            indicates the request is being made by the inventory record, in which case it is archived immediately.
         """
-        query = 'INSERT OR IGNORE INTO orders (requests_id, order_date, units_ordered, comments) VALUES (?,?,?,?)'
+        if wizard:
+            query = \
+                'INSERT OR IGNORE INTO orders' +\
+                '(requests_id, order_date, units_ordered, comments, archived, approved) VALUES (?,?,?,?,?,?)'
+        else:
+            query = \
+                'INSERT OR IGNORE INTO orders (requests_id, order_date, units_ordered, comments) VALUES (?,?,?,?)'
         return self.db_connector(query, values)
 
-    def new_received_record(self, values):
+    def new_received_record(self, values, wizard=False):
         """Inserts new record into received table. Received records indicate products that have arrived at the lab.
         Due to partial order fulfillment, each order may have multiple received records.
 
@@ -181,11 +199,20 @@ class AddDelete(Connector):
         values : tuple
             (orders ID, received date, received amount, lot number,
              expiry date, storage location, model, equipment SIN, comments)
+
+        wizard : bool
+            indicates the request is being made by the inventory record, in which case it is archived immediately.
         """
-        query = 'INSERT OR IGNORE' \
-                ' INTO received' \
-                ' (orders_id, received_date, received_amount, lot_number, expiry_date, storage_location, ' \
-                'model, equipment_SN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
+        if wizard:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO received' \
+                    ' (orders_id, received_date, received_amount, lot_number, expiry_date, storage_location, ' \
+                    'model, equipment_SN, comments, archived, approved) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+        else:
+            query = 'INSERT OR IGNORE' \
+                    ' INTO received' \
+                    ' (orders_id, received_date, received_amount, lot_number, expiry_date, storage_location, ' \
+                    'model, equipment_SN, comments) VALUES (?,?,?,?,?,?,?,?,?)'
         return self.db_connector(query, values)
 
     def new_inventory_record(self, values):

@@ -379,7 +379,9 @@ class ReceivedView(tk.Frame):
                  text=received_order[0],
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
-                 fg=self.formatting.colour_code_3).grid(row=0, column=0, sticky=tk.W, pady=5, padx=10)
+                 wraplength=400,
+                 justify=tk.LEFT,
+                 fg=self.formatting.colour_code_3).grid(row=0, column=0, sticky=tk.W, pady=5, padx=10, columnspan=3)
         tk.Label(receive_product_popup,
                  text="Amount Received:",
                  font=self.formatting.medium_step_font,
@@ -745,7 +747,7 @@ class ReceivedView(tk.Frame):
     def inventory_received_item_popup(self, item_to_inventory):
         inventory_received_item_popup = tk.Toplevel()
         inventory_received_item_popup.config(bg=self.formatting.colour_code_1)
-        inventory_received_item_popup.geometry('600x200')
+        inventory_received_item_popup.geometry('650x300')
         locations_dict = {}
         locations_list = []
         sub_locations_list = []
@@ -776,6 +778,8 @@ class ReceivedView(tk.Frame):
                  text="Receive " + item_to_inventory[0],
                  font=self.formatting.homepage_window_select_button_font,
                  bg=self.formatting.colour_code_1,
+                 wraplength=650,
+                 justify=tk.LEFT,
                  fg=self.formatting.colour_code_3).grid(row=1,
                                                         column=0,
                                                         columnspan=3,

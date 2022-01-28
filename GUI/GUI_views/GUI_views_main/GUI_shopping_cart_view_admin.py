@@ -3,6 +3,7 @@ from SQL import dB_select
 from SQL import dB_add_delete
 from SQL import dB_edit
 from GUI.GUI_formatting import GUI_formatting as tk_formatting
+from GUI.GUI_formatting import GUI_errorHandling as tk_error_handling
 from GUI.GUI_formatting import GUI_data_export as tk_dataExport
 import datetime
 
@@ -14,6 +15,7 @@ class ShoppingCartViewAdmin(tk.Frame):
         self.parent = parent
         self.active_user = ""
         self.formatting = tk_formatting.TkFormattingMethods()
+        self.error_handling = tk_error_handling.ErrorHandling()
         self.data_export = tk_dataExport.TkDataExportMethods()
         self.select_db = dB_select.Select()
         self.add_delete_db = dB_add_delete.AddDelete()
@@ -220,7 +222,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                                            ["vendors v", "v.id", "p.categories_id"],
                                            ["categories c", "c.id", "r.price_id"],
                                            ["priceTracking pt", "pt.id", ""]],
-                                          "u.user_name",
+                                          "v.vendor_name, c.category_name",
                                           no_archive="r.archived")
 
     def make_scrollable_shopping_cart_header_labels(self):
@@ -340,7 +342,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                 tk.Button(self.shopping_cart_frame,
                           text="Order",
                           font=self.formatting.medium_step_font,
-                          command=lambda item=item: self.order_product_popup(item[9], item[0])).grid(row=row_counter,
+                          command=lambda item=item: self.order_product_popup(item, item[0])).grid(row=row_counter,
                                                                                                      column=11,
                                                                                                      sticky=tk.W,
                                                                                                      padx=10,
@@ -399,6 +401,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                  bg=self.formatting.colour_code_1,
                  fg=self.formatting.colour_code_2
                  ).grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
+        units_ordered_entry.insert(tk.END, request_to_order[5])
         units_ordered_entry.grid(row=0, column=1, sticky=tk.W, padx=10, pady=5)
         tk.Label(order_product_popup,
                  text="Comments",
@@ -414,13 +417,13 @@ class ShoppingCartViewAdmin(tk.Frame):
         tk.Button(order_product_popup,
                   text="Order Product",
                   font=self.formatting.medium_step_font,
-                  command=lambda: self.order_request_and_reload_admin_shopping_cart(request_to_order,
-                                                                                    datetime.date.today(),
-                                                                                    units_ordered_entry.get(),
-                                                                                    order_comments_textbox.get("1.0",
-                                                                                                               tk.END),
-                                                                                    order_product_popup,
-                                                                                    product_to_order)).grid(
+                  command=lambda: self.check_if_int_and_go_to_order_request(request_to_order[9],
+                                                                            datetime.date.today(),
+                                                                            units_ordered_entry.get(),
+                                                                            order_comments_textbox.get("1.0",
+                                                                                                       tk.END),
+                                                                            order_product_popup,
+                                                                            product_to_order)).grid(
             row=3, column=0, sticky=tk.W, padx=10, pady=5
         )
         if len(most_recent_order_check) > 0:
@@ -438,6 +441,30 @@ class ShoppingCartViewAdmin(tk.Frame):
                      bg=self.formatting.colour_code_1,
                      fg=self.formatting.colour_code_3).grid(
                 row=4, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+
+    def check_if_int_and_go_to_order_request(self,
+                                             requests_id,
+                                             order_date,
+                                             units_ordered,
+                                             comments,
+                                             order_popup,
+                                             product_to_order,):
+        blank_check = self.error_handling.checkBlankEntry(units_ordered)
+        int_check = self.error_handling.checkIfInt(units_ordered)
+        if blank_check and int_check:
+            self.order_request_and_reload_admin_shopping_cart(requests_id,
+                                                              order_date,
+                                                              units_ordered,
+                                                              comments,
+                                                              order_popup,
+                                                              product_to_order)
+        else:
+            tk.Label(order_popup,
+                     text="Amount ordered must be an integer value.",
+                     font=self.formatting.medium_step_font,
+                     bg=self.formatting.colour_code_1,
+                     fg=self.formatting.colour_code_3).grid(
+                row=5, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
 
     def order_request_and_reload_admin_shopping_cart(self,
                                                      requests_id,
@@ -466,7 +493,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_1,
                      fg=self.formatting.colour_code_3).grid(
-                row=5, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
+                row=6, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
             tk.Button(order_popup,
                       text="Confirm Order",
                       font=self.formatting.medium_step_font,
@@ -477,7 +504,7 @@ class ShoppingCartViewAdmin(tk.Frame):
                                                                                         order_popup,
                                                                                         product_to_order,
                                                                                         confirmed=True)).grid(
-                row=6, column=0, sticky=tk.W, padx=10, pady=5)
+                row=7, column=0, sticky=tk.W, padx=10, pady=5)
         else:
             self.add_delete_db.new_orders_record((requests_id,
                                                  order_date,

@@ -711,34 +711,34 @@ class ProductListView(tk.Frame):
                                       bg=self.formatting.colour_code_1,
                                       fg=self.formatting.colour_code_3)
         self.formatting.grid_shopping_cart_labels(product_info_label, 0, 0)
-        product_name = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                   product[1],
-                                                                   self.formatting.colour_code_3)
+        product_name = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                                product[1],
+                                                                                self.formatting.colour_code_3)
         self.formatting.grid_shopping_cart_labels(product_name, 1, 0)
-        catalog_id = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                 "Catalog: " + product[2],
-                                                                 self.formatting.colour_code_2)
+        catalog_id = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                              "Catalog: " + product[2],
+                                                                              self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(catalog_id, 2, 0)
-        vendor_name = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                  "Vendor: " + product[3],
-                                                                  self.formatting.colour_code_2)
+        vendor_name = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                               "Vendor: " + product[3],
+                                                                               self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(vendor_name, 5, 0)
-        category_name = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                    "Category: " + product[4],
-                                                                    self.formatting.colour_code_2)
+        category_name = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                                 "Category: " + product[4],
+                                                                                 self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(category_name, 6, 0)
         if product[5] == "None":
-            sub_category_name = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                            "No Sub Category",
-                                                                            self.formatting.colour_code_2)
+            sub_category_name = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                                         "No Sub Category",
+                                                                                         self.formatting.colour_code_2)
         else:
-            sub_category_name = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                            "Sub Category: " + product[5],
-                                                                            self.formatting.colour_code_2)
+            sub_category_name = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                                         "Sub Category: " + product[5],
+                                                                                         self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(sub_category_name, 7, 0)
-        unit_of_issue = self.formatting.create_shopping_cart_labels(product_frame,
-                                                                    "Unit of Issue: " + product[9],
-                                                                    self.formatting.colour_code_2)
+        unit_of_issue = self.formatting.create_double_width_shopping_cart_labels(product_frame,
+                                                                                 "Unit of Issue: " + product[9],
+                                                                                 self.formatting.colour_code_2)
         self.formatting.grid_shopping_cart_labels(unit_of_issue, 3, 0)
         product_info_label = tk.Label(product_frame,
                                       text="Product Notes",
@@ -749,7 +749,9 @@ class ProductListView(tk.Frame):
         product_notes = tk.Text(product_frame,
                                 height=15,
                                 width=40)
-        product_notes.config(bg=self.formatting.colour_code_2)
+        product_notes.config(bg=self.formatting.colour_code_2,
+                             fg=self.formatting.colour_code_1,
+                             font=self.formatting.medium_step_font)
         product_notes.config(state=tk.NORMAL)
         product_notes.insert(tk.END, product[6])
         product_notes.config(state=tk.DISABLED, wrap="word")
@@ -826,7 +828,7 @@ class ProductListView(tk.Frame):
             tk.Label(pricing_frame,
                      text="Current Price: $" +
                           "{:.2f}".format(product_pricing_list[0][2]) +
-                          " (Last Updated " + str(product_pricing_list[0][3]) + ")",
+                          " (Last Updated " + self.formatting.lab_date_format(product_pricing_list[0][3]) + ")",
                      font=self.formatting.medium_step_font,
                      bg=self.formatting.colour_code_3,
                      fg=self.formatting.colour_code_1).grid(row=2, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
@@ -838,14 +840,17 @@ class ProductListView(tk.Frame):
                      fg=self.formatting.colour_code_1).grid(row=2, column=0, sticky=tk.W, padx=10, pady=5)
 
         price_history_textbox = tk.Text(pricing_frame,
-                                        height=13,
-                                        width=50)
+                                        height=11,
+                                        width=40)
         price_history_textbox.config(state=tk.NORMAL)
+        price_history_textbox.config(bg=self.formatting.colour_code_2,
+                                     fg=self.formatting.colour_code_1,
+                                     font=self.formatting.medium_step_font)
         price_history_textbox.insert(tk.END, "Price        | Date \n")
-        price_history_textbox.insert(tk.END, "------------------------------\n")
+        price_history_textbox.insert(tk.END, "-"*70+'\n')
         for item in product_pricing_list[1:]:
-            price_history_textbox.insert(tk.END, ("{:.2f}".format(item[2]) + " "*(10-len(str(item[2]))) + "| " +
-                                                  str(item[3]) +
+            price_history_textbox.insert(tk.END, ("{:.2f}".format(item[2]) + " "*(9-len(str(item[2]))) + "| " +
+                                                  self.formatting.lab_date_format(item[3]) +
                                                   "\n"))
         price_history_textbox.config(state=tk.DISABLED, wrap="word")
         price_history_textbox.grid(row=3, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)
@@ -857,14 +862,16 @@ class ProductListView(tk.Frame):
             row=4, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
         index_card_notes = tk.Text(pricing_frame,
                                    height=15,
-                                   width=50)
-        index_card_notes.config(bg=self.formatting.colour_code_2)
+                                   width=40)
+        index_card_notes.config(bg=self.formatting.colour_code_2,
+                                fg=self.formatting.colour_code_1,
+                                font=self.formatting.medium_step_font)
         index_card_notes.config(state=tk.NORMAL)
         if len(product[11]) > 0:
             index_card_notes.insert(tk.END, product[11])
         else:
             index_card_notes.insert(tk.END, " Amount Ordered  | Date        | Price/Unit \n")
-            index_card_notes.insert(tk.END, "---------------------------------------------- \n")
+            index_card_notes.insert(tk.END, "-"*70+'\n')
         index_card_notes.config(state=tk.DISABLED, wrap="word")
         index_card_notes.grid(row=5, column=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
         tk.Button(pricing_frame,
@@ -985,13 +992,16 @@ class ProductListView(tk.Frame):
         if len(order_amounts) > 0:
             order_history_textbox = tk.Text(order_history_frame,
                                             height=23,
-                                            width=45)
+                                            width=35)
             order_history_textbox.config(state=tk.NORMAL)
-            order_history_textbox.insert(tk.END, " Amount Ordered  | Date           | Price\n")
-            order_history_textbox.insert(tk.END, "---------------------------------------------\n")
+            order_history_textbox.config(bg=self.formatting.colour_code_2,
+                                         fg=self.formatting.colour_code_1,
+                                         font=self.formatting.medium_step_font)
+            order_history_textbox.insert(tk.END, " # Ordered  | Date            | Price\n")
+            order_history_textbox.insert(tk.END, "---------------------------------------------------------------\n")
             for item in order_history_list:
-                order_history_textbox.insert(tk.END, (" " + str(item[2]) + " "*(16-len(str(item[2]))) + "| " +
-                                             str(item[1]) + "     |" + str(item[3]) +
+                order_history_textbox.insert(tk.END, (" " + str(item[2]) + " "*(19-len(str(item[2]))) + "| " +
+                                             self.formatting.lab_date_format(item[1]) + "     | " + str(item[3]) +
                                              "\n"))
             order_history_textbox.config(state=tk.DISABLED, wrap="word")
             order_history_textbox.grid(row=row_counter, column=0, columnspan=3, sticky=tk.W, padx=10, pady=5)

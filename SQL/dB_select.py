@@ -292,6 +292,18 @@ class Select(Connector):
             query = "SELECT * FROM " + table_name + " WHERE " + field_name + " = (?) ORDER BY " + order_by + " LIMIT 1"
         return self.print_or_return_query(query, (condition,), print_view)
 
+    def select_one_from_table_order_by(self,
+                                       table_name,
+                                       order_by,
+                                       print_view=False,
+                                       descending_order=False):
+        if descending_order:
+            query = "SELECT * FROM " + table_name + " ORDER BY " + order_by +\
+                    " DESC LIMIT 1"
+        else:
+            query = "SELECT * FROM " + table_name + " ORDER BY " + order_by + " LIMIT 1"
+        return self.print_or_return_query(query, print_view=print_view)
+
     # LEFT JOINS
 
     def left_join_multiple_tables(self,
